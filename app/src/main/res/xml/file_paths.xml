@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 
+    Configuración de FileProvider para compartir imágenes generadas
+    Archivo: app/src/main/res/xml/file_paths.xml
+    -->
+    
+    <!-- Cache directory para imágenes temporales -->
+    <cache-path 
+        name="shared_images" 
+        path="images/" />
+    
+    <!-- External cache para imágenes temporales (si es necesario) -->
+    <external-cache-path 
+        name="external_shared_images" 
+        path="images/" />
+    
+    <!-- Files directory para imágenes persistentes (opcional) -->
+    <files-path 
+        name="internal_shared_images" 
+        path="images/" />
+</paths>

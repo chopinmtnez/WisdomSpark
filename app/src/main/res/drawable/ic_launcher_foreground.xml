@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Wisdom icon (lightbulb) centered -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,84c0,2.2 1.8,4 4,4h28c2.2,0 4,-1.8 4,-4v-4H36v4zM54,8C44.06,8 36,16.06 36,26c0,9.52 4.76,17.88 12,22.96V56c0,2.2 1.8,4 4,4h24c2.2,0 4,-1.8 4,-4v-7.04c7.24,-5.08 12,-13.44 12,-22.96 0,-15.44 -12.56,-28 -28,-28z"/>
+</vector>

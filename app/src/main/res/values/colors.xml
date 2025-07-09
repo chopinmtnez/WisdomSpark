@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- WisdomSpark Colors -->
+    <color name="wisdom_green">#6BB6A3</color>
+    <color name="wisdom_light_green">#8BCAA8</color>
+    <color name="wisdom_dark_green">#4A8B7A</color>
+    
+    <color name="wisdom_gold">#E6B566</color>
+    <color name="wisdom_light_gold">#F4D499</color>
+    <color name="wisdom_dark_gold">#D4A054</color>
+    
+    <color name="wisdom_sage">#9CAF88</color>
+    <color name="wisdom_white">#FFFFFF</color>
+    <color name="wisdom_light_gray">#F5F5F5</color>
+    <color name="wisdom_dark_gray">#333333</color>
+    
+    <!-- Material Design Default Colors -->
+    <color name="purple_80">#D0BCFF</color>
+    <color name="purple_grey_80">#CCC2DC</color>
+    <color name="pink_80">#EFB8C8</color>
+    
+    <color name="purple_40">#6650a4</color>
+    <color name="purple_grey_40">#625b71</color>
+    <color name="pink_40">#7D5260</color>
+    
+    <!-- Legacy colors necesarios para iconos -->
+    <color name="purple_500">#6200EE</color>
+    <color name="purple_200">#BB86FC</color>
+    <color name="purple_700">#3700B3</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

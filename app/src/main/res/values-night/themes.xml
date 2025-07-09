@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- WisdomSpark Night Theme - Optimizado para modo oscuro -->
+    <style name="Theme.WisdomSpark" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color - más brillante para modo oscuro -->
+        <item name="colorPrimary">@color/wisdom_light_green</item>
+        <item name="colorPrimaryVariant">@color/wisdom_green</item>
+        <item name="colorOnPrimary">@color/wisdom_dark_gray</item>
+        
+        <!-- Secondary brand color - más brillante para modo oscuro -->
+        <item name="colorSecondary">@color/wisdom_light_gold</item>
+        <item name="colorSecondaryVariant">@color/wisdom_gold</item>
+        <item name="colorOnSecondary">@color/wisdom_dark_gray</item>
+        
+        <!-- Background colors - oscuro -->
+        <item name="android:colorBackground">@color/wisdom_dark_gray</item>
+        <item name="colorOnBackground">@color/wisdom_white</item>
+        <item name="colorSurface">@color/wisdom_dark_gray</item>
+        <item name="colorOnSurface">@color/wisdom_white</item>
+        
+        <!-- Error colors -->
+        <item name="colorError">@color/pink_80</item>
+        <item name="colorOnError">@color/wisdom_dark_gray</item>
+        
+        <!-- Status bar -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        
+        <!-- Dark mode settings -->
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+    </style>
+</resources>

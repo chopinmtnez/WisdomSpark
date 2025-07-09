@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- WisdomSpark Theme - Material Design 2 para compatibilidad con XML -->
+    <style name="Theme.WisdomSpark" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/wisdom_green</item>
+        <item name="colorPrimaryVariant">@color/wisdom_dark_green</item>
+        <item name="colorOnPrimary">@color/wisdom_white</item>
+        
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/wisdom_gold</item>
+        <item name="colorSecondaryVariant">@color/wisdom_dark_gold</item>
+        <item name="colorOnSecondary">@color/wisdom_white</item>
+        
+        <!-- Background colors -->
+        <item name="android:colorBackground">@color/wisdom_white</item>
+        <item name="colorOnBackground">@color/wisdom_dark_gray</item>
+        <item name="colorSurface">@color/wisdom_white</item>
+        <item name="colorOnSurface">@color/wisdom_dark_gray</item>
+        
+        <!-- Error colors -->
+        <item name="colorError">@color/pink_40</item>
+        <item name="colorOnError">@color/wisdom_white</item>
+        
+        <!-- Status bar -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        
+        <!-- Compatibility settings -->
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+    </style>
+</resources>
