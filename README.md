@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🧠 WisdomSpark - Daily Wisdom App
 
 > **Una aplicación Android premium que transforma la sabiduría diaria en experiencias visuales extraordinarias**
@@ -304,3 +305,6 @@ copies or substantial portions of the Software.
 *Construido con 💛 usando Kotlin & Jetpack Compose*
 
 </div>
+=======
+# WisdomSpark
+>>>>>>> 770be6eea32a517852df71d46932d2d11dcac09e
