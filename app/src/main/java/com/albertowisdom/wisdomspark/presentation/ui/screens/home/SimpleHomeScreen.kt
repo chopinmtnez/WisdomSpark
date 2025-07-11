@@ -24,7 +24,7 @@ fun SimpleHomeScreen(
     modifier: Modifier = Modifier
 ) {
     val backgroundGradient = Brush.linearGradient(
-        colors = listOf(WisdomPearl, WisdomBeige, WisdomChampagne),
+        colors = getThemedGradientColors(),
         start = androidx.compose.ui.geometry.Offset(0f, 0f),
         end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
     )
@@ -45,7 +45,7 @@ fun SimpleHomeScreen(
                 text = "WisdomSpark ✨",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = WisdomCharcoal
+                    color = MaterialTheme.colorScheme.onBackground
                 ),
                 textAlign = TextAlign.Center
             )
@@ -57,7 +57,7 @@ fun SimpleHomeScreen(
                     .padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.9f)
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
@@ -70,7 +70,7 @@ fun SimpleHomeScreen(
                         text = "\"El único modo de hacer un gran trabajo es amar lo que haces.\"",
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Medium,
-                            color = WisdomCharcoal
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         textAlign = TextAlign.Center
                     )
@@ -78,19 +78,19 @@ fun SimpleHomeScreen(
                     Text(
                         text = "— Steve Jobs",
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = WisdomTaupe,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.SemiBold
                         )
                     )
                     
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = WisdomGold.copy(alpha = 0.2f)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                     ) {
                         Text(
                             text = "🔥 Motivación",
                             style = MaterialTheme.typography.labelMedium.copy(
-                                color = WisdomCharcoal,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold
                             ),
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

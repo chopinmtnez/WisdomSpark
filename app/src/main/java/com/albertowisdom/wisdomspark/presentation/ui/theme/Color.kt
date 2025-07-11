@@ -41,6 +41,23 @@ fun getWisdomGradientColors(): List<Color> {
     return listOf(WisdomPearl, WisdomBeige, WisdomChampagne)
 }
 
+// **FUNCIÓN PARA GRADIENTES CONSCIENTES DEL TEMA**
+@androidx.compose.runtime.Composable
+fun getThemedGradientColors(): List<Color> {
+    // Usar directamente los colores del MaterialTheme para crear gradientes apropiados
+    return listOf(
+        androidx.compose.material3.MaterialTheme.colorScheme.background,
+        androidx.compose.material3.MaterialTheme.colorScheme.surface,
+        androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+    )
+}
+
+// **FUNCIÓN PARA OBTENER COLOR DE FONDO PRINCIPAL**
+@androidx.compose.runtime.Composable
+fun getThemedBackgroundColor(): Color {
+    return androidx.compose.material3.MaterialTheme.colorScheme.background
+}
+
 // **GRADIENTES PROFESIONALES**
 // Estos no son Color objects, pero las definiciones para usar en Brush.linearGradient()
 

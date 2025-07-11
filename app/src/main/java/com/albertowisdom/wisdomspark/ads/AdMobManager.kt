@@ -18,8 +18,11 @@ class AdMobManager @Inject constructor() {
 
     companion object {
         // Test Ad Unit IDs - Reemplazar con IDs reales en producción
-        const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
-        const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
+        //const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
+        //const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
+        const val BANNER_AD_UNIT_ID = "ca-app-pub-7402516505141988/8292203738"
+        const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-7402516505141988/9374185266"
+
         
         // Configuración de frecuencia
         const val INTERSTITIAL_FREQUENCY = 3 // Mostrar cada 3 interacciones
@@ -85,6 +88,10 @@ class AdMobManager @Inject constructor() {
                             interstitialAd = null
                             Log.e("AdMob", "❌ Error mostrando interstitial: ${error.message}")
                         }
+                        
+                        override fun onAdShowedFullScreenContent() {
+                            Log.d("AdMob", "📱 Interstitial mostrado en pantalla completa")
+                        }
                     }
                 }
 
@@ -107,8 +114,14 @@ class AdMobManager @Inject constructor() {
         val shouldShow = force || (interactionCount % INTERSTITIAL_FREQUENCY == 0)
         
         if (shouldShow && interstitialAd != null) {
-            interstitialAd?.show(activity)
-            Log.d("AdMob", "📱 Interstitial mostrado")
+            try {
+                interstitialAd?.show(activity)
+                Log.d("AdMob", "📱 Interstitial mostrado")
+            } catch (e: Exception) {
+                Log.e("AdMob", "❌ Error mostrando interstitial: ${e.message}")
+                // Intentar recargar el anuncio
+                loadInterstitialAd(activity)
+            }
         } else if (shouldShow) {
             Log.d("AdMob", "⚠️ Interstitial no disponible, precargando...")
             loadInterstitialAd(activity)

@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +25,9 @@ class UserPreferences @Inject constructor(
         private val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")
         private val HAPTIC_FEEDBACK_KEY = booleanPreferencesKey("haptic_feedback")
         private val NOTIFICATIONS_KEY = booleanPreferencesKey("notifications_enabled")
+        private val NOTIFICATION_HOUR_KEY = intPreferencesKey("notification_hour")
+        private val NOTIFICATION_MINUTE_KEY = intPreferencesKey("notification_minute")
+        private val NOTIFICATION_DAYS_KEY = stringSetPreferencesKey("notification_days")
     }
     
     // Flow para modo swipeable
@@ -49,6 +54,24 @@ class UserPreferences @Inject constructor(
             preferences[NOTIFICATIONS_KEY] ?: true
         }
     
+    // Flow para hora de notificación
+    val notificationHour: Flow<Int> = context.dataStore.data
+        .map { preferences ->
+            preferences[NOTIFICATION_HOUR_KEY] ?: 9 // 9:00 AM por defecto
+        }
+    
+    // Flow para minuto de notificación  
+    val notificationMinute: Flow<Int> = context.dataStore.data
+        .map { preferences ->
+            preferences[NOTIFICATION_MINUTE_KEY] ?: 0 // :00 por defecto
+        }
+    
+    // Flow para días de notificación (1=Domingo, 2=Lunes, etc.)
+    val notificationDays: Flow<Set<String>> = context.dataStore.data
+        .map { preferences ->
+            preferences[NOTIFICATION_DAYS_KEY] ?: setOf("1", "2", "3", "4", "5", "6", "7") // Todos los días por defecto
+        }
+    
     // Funciones para cambiar preferencias
     suspend fun setSwipeableMode(enabled: Boolean) {
         context.dataStore.edit { preferences ->
@@ -71,6 +94,19 @@ class UserPreferences @Inject constructor(
     suspend fun setNotificationsEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[NOTIFICATIONS_KEY] = enabled
+        }
+    }
+    
+    suspend fun setNotificationTime(hour: Int, minute: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[NOTIFICATION_HOUR_KEY] = hour
+            preferences[NOTIFICATION_MINUTE_KEY] = minute
+        }
+    }
+    
+    suspend fun setNotificationDays(days: Set<String>) {
+        context.dataStore.edit { preferences ->
+            preferences[NOTIFICATION_DAYS_KEY] = days
         }
     }
 }

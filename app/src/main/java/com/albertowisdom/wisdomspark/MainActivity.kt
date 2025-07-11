@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.albertowisdom.wisdomspark.ads.AdMobManager
 import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
 import com.albertowisdom.wisdomspark.presentation.ui.WisdomSparkApp
@@ -27,11 +30,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Edge-to-Edge restaurado ahora que el layout está corregido
-        enableEdgeToEdge()
+        // Configurar edge-to-edge con mejor manejo de insets
+        setupEdgeToEdge()
         
         // Inicializar AdMob
         adMobManager.initialize(this)
+        
+        // Verificar si se abrió desde notificación
+        val shouldOpenDailyQuote = intent?.getBooleanExtra("open_daily_quote", false) ?: false
         
         setContent {
             // Observar dark mode preference
@@ -42,9 +48,21 @@ class MainActivity : ComponentActivity() {
             ) {
                 WisdomSparkApp(
                     adMobManager = adMobManager,
-                    userPreferences = userPreferences
+                    userPreferences = userPreferences,
+                    shouldOpenDailyQuote = shouldOpenDailyQuote
                 )
             }
+        }
+    }
+    
+    private fun setupEdgeToEdge() {
+        // Configurar edge-to-edge con mejor control de insets
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.apply {
+            // Configurar para que los anuncios intersticiales funcionen correctamente
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 

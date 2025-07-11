@@ -22,7 +22,32 @@ object ShareUtils {
      * Función principal para compartir citas (llamada desde QuoteCard)
      */
     fun shareQuote(context: Context, quote: Quote) {
-        shareQuoteAsImage(context, quote)
+        try {
+            // Intentar compartir como imagen primero
+            shareQuoteAsImage(context, quote)
+        } catch (e: Exception) {
+            // Si falla, usar texto como respaldo
+            shareQuoteAsText(context, quote)
+        }
+    }
+    
+    /**
+     * Función de emergencia que siempre funciona - solo texto
+     */
+    fun shareQuoteSimple(context: Context, quote: Quote) {
+        try {
+            val shareText = "\"${quote.text}\"\n\n— ${quote.author}\n\n📱 WisdomSpark"
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, shareText)
+            }
+            
+            val chooser = Intent.createChooser(shareIntent, "Compartir cita")
+            context.startActivity(chooser)
+            
+        } catch (e: Exception) {
+            showError(context, "Error al compartir: ${e.message}")
+        }
     }
     
     /**
@@ -62,18 +87,26 @@ object ShareUtils {
                 }
                 
                 val chooser = Intent.createChooser(shareIntent, "Compartir imagen")
-                context.startActivity(chooser)
+                if (chooser.resolveActivity(context.packageManager) != null) {
+                    context.startActivity(chooser)
+                } else {
+                    // Fallback a texto si no hay apps que puedan manejar imágenes
+                    shareQuoteAsText(context, quote)
+                }
             } else {
-                showError(context, "Error al crear la imagen")
+                // Fallback a texto si no se puede crear imagen
+                shareQuoteAsText(context, quote)
             }
             
         } catch (e: Exception) {
-            showError(context, "Error al compartir imagen: ${e.message}")
+            e.printStackTrace()
+            // Fallback a texto si falla la imagen
+            shareQuoteAsText(context, quote)
         }
     }
     
     /**
-     * Comparte específicamente en Instagram Stories
+     * Comparte específicamente en Instagram Stories con diseño mejorado
      */
     fun shareToInstagramStory(context: Context, quote: Quote) {
         try {
@@ -84,20 +117,57 @@ object ShareUtils {
                 val intent = Intent("com.instagram.share.ADD_TO_STORY").apply {
                     type = "image/*"
                     putExtra("interactive_asset_uri", imageUri)
-                    putExtra("content_url", "https://wisdomspark.app") // URL de tu app
+                    putExtra("content_url", "https://wisdomspark.app")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 
                 if (intent.resolveActivity(context.packageManager) != null) {
                     context.startActivity(intent)
                 } else {
-                    // Instagram no instalado, usar compartir normal
                     shareQuoteAsImage(context, quote)
                 }
             }
             
         } catch (e: Exception) {
             showError(context, "Error al compartir en Instagram: ${e.message}")
+        }
+    }
+    
+    /**
+     * Comparte con diseño TikTok/Vertical
+     */
+    fun shareToTikTok(context: Context, quote: Quote) {
+        try {
+            val bitmap = createTikTokStyleImage(quote)
+            val imageUri = saveBitmapToCache(context, bitmap, "tiktok_quote.jpg")
+            
+            if (imageUri != null) {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/*"
+                    putExtra(Intent.EXTRA_STREAM, imageUri)
+                    putExtra(Intent.EXTRA_TEXT, "#WisdomSpark #SabiduríaDiaria #${quote.category.replace(" ", "")}")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                
+                val chooser = Intent.createChooser(shareIntent, "Compartir en TikTok")
+                context.startActivity(chooser)
+            }
+            
+        } catch (e: Exception) {
+            shareQuoteAsImage(context, quote)
+        }
+    }
+    
+    /**
+     * Comparte con diseño personalizado según plataforma
+     */
+    fun shareToSpecificPlatform(context: Context, quote: Quote, platform: SharePlatform) {
+        when (platform) {
+            SharePlatform.INSTAGRAM_STORY -> shareToInstagramStory(context, quote)
+            SharePlatform.TIKTOK -> shareToTikTok(context, quote)
+            SharePlatform.LINKEDIN -> shareToLinkedIn(context, quote)
+            SharePlatform.TWITTER -> shareToTwitter(context, quote)
+            SharePlatform.WHATSAPP -> shareToWhatsApp(context, quote)
         }
     }
     
@@ -185,7 +255,7 @@ object ShareUtils {
         // Categoría con emoji
         textPaint.textSize = 36f
         textPaint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
-        val categoryEmoji = getCategoryEmoji(quote.category)
+        val categoryEmoji = getCategoryEmojiForImage(quote.category)
         canvas.drawText("$categoryEmoji ${quote.category}", centerX, centerY + 280f, textPaint)
         
         // Footer con fecha
@@ -194,6 +264,65 @@ object ShareUtils {
         val currentDate = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
             .format(java.util.Date())
         canvas.drawText("Sabiduría diaria • $currentDate", centerX, height - 60f, textPaint)
+        
+        return bitmap
+    }
+    
+    private fun createTikTokStyleImage(quote: Quote): Bitmap {
+        val width = 1080
+        val height = 1920
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        
+        // Fondo negro con elementos neon
+        canvas.drawColor(Color.BLACK)
+        
+        // Elementos decorativos neon
+        val neonPaint = Paint().apply {
+            color = Color.parseColor("#00FF88")
+            style = Paint.Style.STROKE
+            strokeWidth = 8f
+            setShadowLayer(15f, 0f, 0f, Color.parseColor("#00FF88"))
+        }
+        
+        // Marcos decorativos
+        val margin = 80f
+        canvas.drawRect(margin, margin, width - margin, height - margin, neonPaint)
+        
+        // Texto principal
+        val textPaint = Paint().apply {
+            color = Color.WHITE
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        
+        val centerX = width / 2f
+        val centerY = height / 2f
+        
+        // Logo/marca
+        textPaint.textSize = 80f
+        textPaint.color = Color.parseColor("#00FF88")
+        canvas.drawText("WisdomSpark", centerX, 200f, textPaint)
+        
+        // Cita principal
+        textPaint.textSize = 88f
+        textPaint.color = Color.WHITE
+        textPaint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        
+        val quoteText = "\"${quote.text}\""
+        val maxWidth = width - 120f
+        drawMultilineText(canvas, quoteText, centerX, centerY, textPaint, maxWidth)
+        
+        // Autor
+        textPaint.textSize = 60f
+        textPaint.color = Color.parseColor("#FFD700")
+        canvas.drawText("— ${quote.author}", centerX, centerY + 400f, textPaint)
+        
+        // Hashtags
+        textPaint.textSize = 48f
+        textPaint.color = Color.parseColor("#00FF88")
+        canvas.drawText("#WisdomSpark #SabiduríaDiaria", centerX, height - 150f, textPaint)
         
         return bitmap
     }
@@ -308,7 +437,7 @@ object ShareUtils {
         }
     }
     
-    private fun getCategoryEmoji(category: String): String {
+    private fun getCategoryEmojiForImage(category: String): String {
         return when (category.lowercase()) {
             "motivación" -> "🔥"
             "vida" -> "🌱"
@@ -317,12 +446,12 @@ object ShareUtils {
             "educación" -> "📚"
             "creatividad" -> "🎨"
             "éxito" -> "🏆"
-            "autenticidad" -> "💎"
+            "autenticidad" -> "🦋"
             "felicidad" -> "😊"
-            "sabiduría" -> "🦉"
-            "confianza" -> "💫"
+            "sabiduría" -> "🧠"
+            "confianza" -> "💎"
             "progreso" -> "📈"
-            "excelencia" -> "👑"
+            "excelencia" -> "⭐"
             "acción" -> "⚡"
             else -> "💫"
         }
@@ -335,22 +464,122 @@ object ShareUtils {
     ): Uri? {
         return try {
             val cachePath = File(context.cacheDir, "images")
-            cachePath.mkdirs()
             
-            val file = File(cachePath, fileName)
-            val fileOutputStream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fileOutputStream)
-            fileOutputStream.close()
+            // Crear directorio si no existe
+            if (!cachePath.exists()) {
+                cachePath.mkdirs()
+            }
             
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
-        } catch (e: IOException) {
+            // Crear archivo con nombre único para evitar conflictos
+            val uniqueFileName = "${System.currentTimeMillis()}_$fileName"
+            val file = File(cachePath, uniqueFileName)
+            
+            // Guardar bitmap
+            FileOutputStream(file).use { fileOutputStream ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fileOutputStream)
+                fileOutputStream.flush()
+            }
+            
+            // Verificar que el archivo se creó correctamente
+            if (file.exists() && file.length() > 0) {
+                FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
             e.printStackTrace()
             null
         }
+    }
+    
+    // Nuevas funciones para plataformas específicas
+    
+    private fun shareToLinkedIn(context: Context, quote: Quote) {
+        val linkedInText = buildLinkedInText(quote)
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, linkedInText)
+            putExtra(Intent.EXTRA_SUBJECT, "Sabiduría Profesional")
+        }
+        
+        try {
+            context.startActivity(Intent.createChooser(shareIntent, "Compartir en LinkedIn"))
+        } catch (e: Exception) {
+            shareQuoteAsText(context, quote)
+        }
+    }
+    
+    private fun shareToTwitter(context: Context, quote: Quote) {
+        val twitterText = buildTwitterText(quote)
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, twitterText)
+        }
+        
+        try {
+            context.startActivity(Intent.createChooser(shareIntent, "Compartir en Twitter"))
+        } catch (e: Exception) {
+            shareQuoteAsText(context, quote)
+        }
+    }
+    
+    private fun shareToWhatsApp(context: Context, quote: Quote) {
+        val whatsappText = buildWhatsAppText(quote)
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, whatsappText)
+            setPackage("com.whatsapp")
+        }
+        
+        try {
+            if (shareIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(shareIntent)
+            } else {
+                shareQuoteAsText(context, quote)
+            }
+        } catch (e: Exception) {
+            shareQuoteAsText(context, quote)
+        }
+    }
+    
+    private fun buildLinkedInText(quote: Quote): String {
+        return """
+            💡 "${quote.text}"
+            
+            — ${quote.author}
+            
+            Reflexiones profesionales y crecimiento personal.
+            
+            #Liderazgo #Motivación #CrecimientoProfesional #WisdomSpark
+        """.trimIndent()
+    }
+    
+    private fun buildTwitterText(quote: Quote): String {
+        val maxLength = 280
+        val baseText = "\"${quote.text}\" — ${quote.author}"
+        val hashtags = " #WisdomSpark #Motivación"
+        
+        return if ((baseText + hashtags).length <= maxLength) {
+            baseText + hashtags
+        } else {
+            baseText.take(maxLength - hashtags.length - 3) + "..." + hashtags
+        }
+    }
+    
+    private fun buildWhatsAppText(quote: Quote): String {
+        return """
+            ✨ *${quote.text}*
+            
+            — ${quote.author}
+            
+            🌟 Sabiduría diaria de WisdomSpark
+            
+            📱 Descarga más inspiración: [link a PlayStore]
+        """.trimIndent()
     }
     
     private fun showError(context: Context, message: String) {
@@ -364,7 +593,17 @@ enum class ShareOption {
     INSTAGRAM_STORY,
     WHATSAPP,
     FACEBOOK,
-    TWITTER
+    TWITTER,
+    TIKTOK,
+    LINKEDIN
+}
+
+enum class SharePlatform {
+    INSTAGRAM_STORY,
+    TIKTOK,
+    LINKEDIN,
+    TWITTER,
+    WHATSAPP
 }
 
 /**
@@ -372,4 +611,18 @@ enum class ShareOption {
  */
 fun shareQuote(context: Context, quote: Quote) {
     ShareUtils.shareQuote(context, quote)
+}
+
+/**
+ * Función de prueba para verificar el funcionamiento
+ */
+fun testShare(context: Context) {
+    val testQuote = Quote(
+        id = 1,
+        text = "Esta es una cita de prueba para verificar que la funcionalidad de compartir funciona correctamente.",
+        author = "Autor de Prueba",
+        category = "Motivación",
+        isFavorite = false
+    )
+    ShareUtils.shareQuoteSimple(context, testQuote)
 }

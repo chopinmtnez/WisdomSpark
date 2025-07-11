@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import com.albertowisdom.wisdomspark.ads.AdMobManager
 import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
 import com.albertowisdom.wisdomspark.presentation.ui.screens.categories.CategoriesScreen
+import com.albertowisdom.wisdomspark.presentation.ui.screens.categories.CategoryDetailScreen
 import com.albertowisdom.wisdomspark.presentation.ui.screens.favorites.FavoritesScreen
 import com.albertowisdom.wisdomspark.presentation.ui.screens.home.EnhancedHomeScreen
 import com.albertowisdom.wisdomspark.presentation.ui.screens.home.HomeScreen
@@ -31,23 +32,55 @@ fun WisdomNavHost(
         composable(Screen.Home.route) {
             EnhancedHomeScreen(
                 adMobManager = adMobManager,
-                userPreferences = userPreferences
+                userPreferences = userPreferences,
+                onNavigateToSettings = {
+                    println("🔧 Navigating to Settings from Swipe mode")
+                    navController.navigate(Screen.Settings.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
         
         composable(Screen.Categories.route) {
             CategoriesScreen(
                 adMobManager = adMobManager,
-                onCategoryClick = { _ ->
-                    // Mostrar interstitial ocasionalmente al navegar
-                    // La lógica está en AdMobManager
+                onCategoryClick = { categoryName ->
+                    // Navegar al detalle de la categoría
+                    println("📚 Navigating to CategoryDetail: $categoryName")
+                    navController.navigate("category_detail/$categoryName")
+                }
+            )
+        }
+        
+        composable("category_detail/{categoryName}") { backStackEntry ->
+            val categoryName = backStackEntry.arguments?.getString("categoryName") ?: ""
+            CategoryDetailScreen(
+                categoryName = categoryName,
+                adMobManager = adMobManager,
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }
         
         composable(Screen.Favorites.route) {
             FavoritesScreen(
-                adMobManager = adMobManager
+                adMobManager = adMobManager,
+                onNavigateToHome = {
+                    println("❤️ Navigating to Home from Favorites")
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
         

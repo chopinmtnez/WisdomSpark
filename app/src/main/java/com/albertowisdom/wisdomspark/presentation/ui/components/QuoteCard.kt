@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,10 +38,14 @@ fun QuoteCard(
     quote: Quote,
     onFavoriteClick: () -> Unit,
     onShareClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userPreferences: UserPreferences? = null
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    
+    // Obtener el estado de las preferencias de feedback háptico
+    val isHapticEnabled by (userPreferences?.isHapticFeedbackEnabled?.collectAsState(initial = true) ?: remember { mutableStateOf(true) })
     
     // Estados de animación
     var isPressed by remember { mutableStateOf(false) }
@@ -60,11 +66,11 @@ fun QuoteCard(
         label = "elevation"
     )
 
-    // Gradientes dinámicos
-    val gradientColors = getWisdomGradientColors()
+    // Gradientes dinámicos que respetan el tema
+    val gradientColors = getThemedGradientColors()
     val cardGradient = Brush.linearGradient(
         colors = listOf(
-            Color.White.copy(alpha = 0.95f),
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
             gradientColors[0].copy(alpha = 0.8f),
             gradientColors[1].copy(alpha = 0.6f)
         )
@@ -72,9 +78,9 @@ fun QuoteCard(
     
     val borderGradient = Brush.linearGradient(
         colors = listOf(
-            WisdomGold.copy(alpha = 0.6f),
-            Color.White.copy(alpha = 0.4f),
-            WisdomGold.copy(alpha = 0.3f)
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
         )
     )
 
@@ -120,10 +126,10 @@ fun QuoteCard(
                     // Badge de categoría con emoji
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = WisdomGold.copy(alpha = 0.15f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                         border = BorderStroke(
                             width = 1.dp,
-                            color = WisdomGold.copy(alpha = 0.3f)
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         )
                     ) {
                         Row(
@@ -138,7 +144,7 @@ fun QuoteCard(
                             Text(
                                 text = quote.category,
                                 style = MaterialTheme.typography.labelMedium,
-                                color = WisdomCharcoal.copy(alpha = 0.8f),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -157,7 +163,7 @@ fun QuoteCard(
                     Text(
                         text = "\"${quote.text}\"",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = WisdomCharcoal,
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                         lineHeight = 32.sp,
                         fontWeight = FontWeight.Normal
@@ -173,7 +179,7 @@ fun QuoteCard(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    WisdomGold.copy(alpha = 0.6f),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                                     Color.Transparent
                                 )
                             ),
@@ -185,7 +191,7 @@ fun QuoteCard(
                 Text(
                     text = "— ${quote.author}",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = WisdomTaupe,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 0.5.sp
@@ -200,35 +206,41 @@ fun QuoteCard(
                     // Botón de favorito
                     ActionButton(
                         onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            if (isHapticEnabled) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
                             onFavoriteClick()
                         },
                         icon = if (quote.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = if (quote.isFavorite) "Quitar de favoritos" else "Agregar a favoritos",
-                        tint = if (quote.isFavorite) WisdomGold else WisdomTaupe
+                        tint = if (quote.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     // Botón de compartir (condicional)
                     if (onShareClick != null) {
                         ActionButton(
                             onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                if (isHapticEnabled) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
                                 onShareClick()
                             },
                             icon = Icons.Default.Share,
                             contentDescription = "Compartir cita",
-                            tint = WisdomTaupe
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
                         // Botón de compartir con funcionalidad integrada
                         ActionButton(
                             onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                if (isHapticEnabled) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
                                 ShareUtils.shareQuote(context, quote)
                             },
                             icon = Icons.Default.Share,
                             contentDescription = "Compartir cita",
-                            tint = WisdomTaupe
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -256,9 +268,9 @@ private fun ActionButton(
     
     val surfaceColor by animateColorAsState(
         targetValue = if (buttonPressed) 
-            WisdomGold.copy(alpha = 0.2f) 
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) 
         else 
-            WisdomGold.copy(alpha = 0.1f),
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
         animationSpec = tween(150),
         label = "surfaceColor"
     )
@@ -279,7 +291,7 @@ private fun ActionButton(
         color = surfaceColor,
         border = BorderStroke(
             width = 1.dp,
-            color = WisdomGold.copy(alpha = 0.3f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
         )
     ) {
         Box(

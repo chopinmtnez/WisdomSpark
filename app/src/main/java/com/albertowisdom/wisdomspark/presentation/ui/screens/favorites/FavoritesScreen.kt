@@ -35,15 +35,16 @@ import com.albertowisdom.wisdomspark.utils.ShareUtils
 @Composable
 fun FavoritesScreen(
     adMobManager: AdMobManager,
+    onNavigateToHome: () -> Unit = {},
     viewModel: FavoritesViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     
-    // Gradiente de fondo
+    // Gradiente de fondo que respeta el tema
     val backgroundGradient = Brush.linearGradient(
-        colors = getWisdomGradientColors(),
+        colors = getThemedGradientColors(),
         start = androidx.compose.ui.geometry.Offset(0f, 0f),
         end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
     )
@@ -73,14 +74,14 @@ fun FavoritesScreen(
                             text = "❤️ Mis Favoritos",
                             style = MaterialTheme.typography.headlineLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = WisdomCharcoal
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                         )
                         
                         Text(
                             text = "${uiState.favoriteQuotes.size} citas guardadas",
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                color = WisdomTaupe
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
@@ -92,7 +93,7 @@ fun FavoritesScreen(
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Actualizar",
-                            tint = WisdomGold
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -119,7 +120,7 @@ fun FavoritesScreen(
                     }
                     
                     else -> {
-                        EmptyFavoritesSection()
+                        EmptyFavoritesSection(onNavigateToHome = onNavigateToHome)
                     }
                 }
             }
@@ -198,7 +199,7 @@ private fun LoadingFavoritesSection() {
             Text(
                 text = "Cargando tus favoritos...",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = WisdomTaupe
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
         }
@@ -206,7 +207,7 @@ private fun LoadingFavoritesSection() {
 }
 
 @Composable
-private fun EmptyFavoritesSection() {
+private fun EmptyFavoritesSection(onNavigateToHome: () -> Unit = {}) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -231,7 +232,7 @@ private fun EmptyFavoritesSection() {
                 },
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.9f)
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -251,7 +252,7 @@ private fun EmptyFavoritesSection() {
                     text = "No tienes favoritos aún",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = WisdomCharcoal
+                        color = MaterialTheme.colorScheme.onBackground
                     ),
                     textAlign = TextAlign.Center
                 )
@@ -259,13 +260,13 @@ private fun EmptyFavoritesSection() {
                 Text(
                     text = "Marca con ❤️ las citas que más te inspiren para guardarlas aquí",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = WisdomTaupe
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     textAlign = TextAlign.Center
                 )
                 
                 Button(
-                    onClick = { /* Navegar a home */ },
+                    onClick = onNavigateToHome,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = WisdomCoral
                     )

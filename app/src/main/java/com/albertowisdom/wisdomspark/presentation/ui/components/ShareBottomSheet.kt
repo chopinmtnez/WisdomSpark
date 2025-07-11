@@ -18,6 +18,7 @@ import com.albertowisdom.wisdomspark.data.models.Quote
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
 import com.albertowisdom.wisdomspark.utils.ShareUtils
 import com.albertowisdom.wisdomspark.utils.ShareOption
+import com.albertowisdom.wisdomspark.utils.SharePlatform
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,7 +40,7 @@ fun ShareBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = bottomSheetState,
-        containerColor = Color.Transparent,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f),
         dragHandle = null
     ) {
         ShareBottomSheetContent(
@@ -51,9 +52,11 @@ fun ShareBottomSheet(
                         ShareOption.TEXT -> ShareUtils.shareQuoteAsText(context, quote)
                         ShareOption.IMAGE -> ShareUtils.shareQuoteAsImage(context, quote)
                         ShareOption.INSTAGRAM_STORY -> ShareUtils.shareToInstagramStory(context, quote)
-                        ShareOption.WHATSAPP -> ShareUtils.shareQuoteAsText(context, quote)
+                        ShareOption.WHATSAPP -> ShareUtils.shareToSpecificPlatform(context, quote, SharePlatform.WHATSAPP)
                         ShareOption.FACEBOOK -> ShareUtils.shareQuoteAsImage(context, quote)
-                        ShareOption.TWITTER -> ShareUtils.shareQuoteAsText(context, quote)
+                        ShareOption.TWITTER -> ShareUtils.shareToSpecificPlatform(context, quote, SharePlatform.TWITTER)
+                        ShareOption.TIKTOK -> ShareUtils.shareToSpecificPlatform(context, quote, SharePlatform.TIKTOK)
+                        ShareOption.LINKEDIN -> ShareUtils.shareToSpecificPlatform(context, quote, SharePlatform.LINKEDIN)
                     }
                     onDismiss()
                 }
@@ -73,9 +76,9 @@ private fun ShareBottomSheetContent(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color.Transparent,
-                        WisdomGold.copy(alpha = 0.9f),
-                        WisdomGold
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.1f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                        MaterialTheme.colorScheme.primary
                     )
                 ),
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
@@ -88,7 +91,7 @@ private fun ShareBottomSheetContent(
                 .width(40.dp)
                 .height(4.dp)
                 .background(
-                    Color.White.copy(alpha = 0.3f),
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                     RoundedCornerShape(2.dp)
                 )
                 .align(Alignment.CenterHorizontally)
@@ -101,7 +104,7 @@ private fun ShareBottomSheetContent(
             text = "Compartir Sabiduría",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onPrimary
             ),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
@@ -112,7 +115,7 @@ private fun ShareBottomSheetContent(
         Text(
             text = "Elige cómo quieres compartir esta inspiración",
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = Color.White.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
             ),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
@@ -124,7 +127,7 @@ private fun ShareBottomSheetContent(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.1f)
+                containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
             )
         ) {
             Column(
@@ -133,7 +136,7 @@ private fun ShareBottomSheetContent(
                 Text(
                     text = "\"${quote.text}\"",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 20.sp
                     ),
                     maxLines = 3
@@ -144,7 +147,7 @@ private fun ShareBottomSheetContent(
                 Text(
                     text = "— ${quote.author}",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                         fontWeight = FontWeight.Medium
                     )
                 )
@@ -158,7 +161,7 @@ private fun ShareBottomSheetContent(
             text = "Opciones Principales",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onSurface
             )
         )
         
@@ -190,6 +193,45 @@ private fun ShareBottomSheetContent(
             )
         }
         
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Redes sociales específicas
+        Text(
+            text = "Redes Sociales",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            ShareOptionButton(
+                emoji = "🎵",
+                label = "TikTok",
+                description = "Diseño viral",
+                onClick = { onOptionSelected(ShareOption.TIKTOK) }
+            )
+            
+            ShareOptionButton(
+                emoji = "💼",
+                label = "LinkedIn",
+                description = "Profesional",
+                onClick = { onOptionSelected(ShareOption.LINKEDIN) }
+            )
+            
+            ShareOptionButton(
+                emoji = "💬",
+                label = "WhatsApp",
+                description = "Directo",
+                onClick = { onOptionSelected(ShareOption.WHATSAPP) }
+            )
+        }
+        
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
@@ -213,8 +255,8 @@ private fun ShareOptionButton(
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            WisdomGold.copy(alpha = 0.3f),
-                            WisdomGold.copy(alpha = 0.1f)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                         )
                     ),
                     shape = RoundedCornerShape(32.dp)
@@ -233,14 +275,14 @@ private fun ShareOptionButton(
             text = label,
             style = MaterialTheme.typography.labelMedium.copy(
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onSurface
             )
         )
         
         Text(
             text = description,
             style = MaterialTheme.typography.labelSmall.copy(
-                color = Color.White.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
         )
     }

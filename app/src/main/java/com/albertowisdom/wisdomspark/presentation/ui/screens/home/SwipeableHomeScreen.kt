@@ -53,6 +53,7 @@ import kotlin.math.roundToInt
 fun SwipeableHomeScreen(
     adMobManager: AdMobManager,
     viewModel: HomeViewModel = hiltViewModel(),
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -127,7 +128,7 @@ fun SwipeableHomeScreen(
 
             // Si se acaban las cartas, recargar
             if (remainingQuotes.isEmpty()) {
-                viewModel.loadTodayQuote() // Esto disparará LaunchedEffect nuevamente
+                viewModel.generateNewQuotes() // Esto disparará LaunchedEffect nuevamente
             }
         }
     }
@@ -138,19 +139,21 @@ fun SwipeableHomeScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = getWisdomGradientColors()
+                    colors = getThemedGradientColors()
                 )
             )
     ) {
         // Patrones decorativos
         DecorativeBackground()
 
-        // Contenido principal
+        // Contenido principal - independiente del banner
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 100.dp) // Espacio reservado para el banner
         ) {
             // Header
-            SwipeableHeader()
+            SwipeableHeader(onNavigateToSettings = onNavigateToSettings)
 
             // Contenido según estado
             when {
@@ -160,7 +163,7 @@ fun SwipeableHomeScreen(
                 uiState.error != null && remainingQuotes.isEmpty() -> {
                     ErrorStateSwipeable(
                         error = uiState.error!!,
-                        onRetryClick = { viewModel.loadTodayQuote() }
+                        onRetryClick = { viewModel.generateNewQuotes() }
                     )
                 }
                 remainingQuotes.isNotEmpty() -> {
@@ -170,7 +173,7 @@ fun SwipeableHomeScreen(
                             .weight(1f)
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
-                            .padding(top = 20.dp, bottom = 160.dp)
+                            .padding(top = 20.dp)
                     ) {
                         // Renderizar las cartas en orden inverso para z-index correcto
                         val visibleCards = remainingQuotes.take(3)
@@ -188,11 +191,12 @@ fun SwipeableHomeScreen(
                                 stackLevel = stackLevel,
                                 onSwipeLeft = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    // Swipe izquierda: solo pasar/rechazar
                                     removeTopCard()
                                 },
                                 onSwipeRight = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    // Solo aplicar favorito si es la cita del día (primera en la lista original)
+                                    // Swipe derecha: agregar a favoritos
                                     val isQuoteOfTheDay = uiState.todayQuote?.let {
                                         it.id == quote.id
                                     } ?: false
@@ -204,14 +208,7 @@ fun SwipeableHomeScreen(
                                 },
                                 onSwipeUp = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    // Solo aplicar favorito si es la cita del día
-                                    val isQuoteOfTheDay = uiState.todayQuote?.let {
-                                        it.id == quote.id
-                                    } ?: false
-
-                                    if (isQuoteOfTheDay) {
-                                        viewModel.toggleFavorite()
-                                    }
+                                    // Swipe arriba: compartir quote
                                     ShareUtils.shareQuote(context, quote)
                                     removeTopCard()
                                 }
@@ -233,7 +230,7 @@ fun SwipeableHomeScreen(
                 else -> {
                     // Estado cuando no hay cartas - mostrar mensaje
                     NoMoreCardsState(
-                        onRefreshClick = { viewModel.loadTodayQuote() }
+                        onRefreshClick = { viewModel.generateNewQuotes() }
                     )
                 }
             }
@@ -258,34 +255,35 @@ fun SwipeableHomeScreen(
                     onSuperLikeClick = {
                         val currentQuote = remainingQuotes.firstOrNull()
                         if (currentQuote != null) {
-                            val isQuoteOfTheDay = uiState.todayQuote?.id == currentQuote.id
-
-                            if (isQuoteOfTheDay) {
-                                viewModel.toggleFavorite()
-                            }
+                            // Super like: solo compartir
                             ShareUtils.shareQuote(context, currentQuote)
                         }
                         removeTopCard()
                     }
                 )
             }
+        }
 
-            // Banner Ad
-            if (adMobManager.shouldShowAds()) {
-                BannerAdView(
-                    onAdLoaded = { adMobManager.onBannerAdLoaded() },
-                    onAdFailedToLoad = { error ->
-                        adMobManager.onBannerAdFailedToLoad(error)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        // Banner Ad - posicionado de forma absoluta en la parte inferior
+        if (adMobManager.shouldShowAds()) {
+            BannerAdView(
+                onAdLoaded = { adMobManager.onBannerAdLoaded() },
+                onAdFailedToLoad = { error ->
+                    adMobManager.onBannerAdFailedToLoad(error)
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+            )
         }
     }
 }
 
 @Composable
 private fun DecorativeBackground() {
+    val decorativeColor1 = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)
+    val decorativeColor2 = MaterialTheme.colorScheme.primary.copy(alpha = 0.04f)
+    
     Canvas(modifier = Modifier.fillMaxSize()) {
         val path1 = Path().apply {
             moveTo(size.width * 0.8f, 0f)
@@ -295,7 +293,7 @@ private fun DecorativeBackground() {
         }
         drawPath(
             path = path1,
-            color = WisdomGold.copy(alpha = 0.06f)
+            color = decorativeColor1
         )
 
         val path2 = Path().apply {
@@ -306,13 +304,13 @@ private fun DecorativeBackground() {
         }
         drawPath(
             path = path2,
-            color = WisdomGold.copy(alpha = 0.04f)
+            color = decorativeColor2
         )
     }
 }
 
 @Composable
-private fun SwipeableHeader() {
+private fun SwipeableHeader(onNavigateToSettings: () -> Unit = {}) {
     val today = remember {
         SimpleDateFormat("EEEE, d 'de' MMMM", Locale.forLanguageTag("es-ES"))
             .format(Date())
@@ -330,33 +328,37 @@ private fun SwipeableHeader() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f, fill = false)
+            ) {
                 Text(
                     text = "WisdomSpark",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = WisdomCharcoal
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 )
                 Text(
                     text = "Desliza para descubrir",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = WisdomTaupe
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
 
+            Spacer(modifier = Modifier.width(16.dp))
+
             Surface(
                 modifier = Modifier.size(40.dp),
                 shape = CircleShape,
-                color = Color.White.copy(alpha = 0.9f),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                 shadowElevation = 4.dp
             ) {
-                IconButton(onClick = { /* settings */ }) {
+                IconButton(onClick = onNavigateToSettings) {
                     Icon(
                         Icons.Default.Settings,
                         contentDescription = "Settings",
-                        tint = WisdomCharcoal,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -368,7 +370,7 @@ private fun SwipeableHeader() {
         Text(
             text = today,
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = WisdomTaupe,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
             )
         )
@@ -389,7 +391,7 @@ private fun LoadingStateSwipeable() {
                 .fillMaxWidth()
                 .height(400.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.95f)
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
             shape = RoundedCornerShape(24.dp)
@@ -402,14 +404,14 @@ private fun LoadingStateSwipeable() {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CircularProgressIndicator(
-                        color = WisdomGold,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Preparando sabiduría...",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = WisdomTaupe
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -434,7 +436,7 @@ private fun ErrorStateSwipeable(
                 .fillMaxWidth()
                 .height(400.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.95f)
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
             shape = RoundedCornerShape(24.dp)
@@ -450,26 +452,26 @@ private fun ErrorStateSwipeable(
                         Icons.Default.ErrorOutline,
                         contentDescription = "Error",
                         modifier = Modifier.size(48.dp),
-                        tint = WisdomError
+                        tint = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Oops...",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = WisdomError
+                        color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = error,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = WisdomTaupe,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = onRetryClick,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = WisdomGold
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null)
@@ -498,7 +500,7 @@ private fun NoMoreCardsState(
                 .fillMaxWidth()
                 .height(400.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.95f)
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
             shape = RoundedCornerShape(24.dp)
@@ -514,7 +516,7 @@ private fun NoMoreCardsState(
                         Icons.Default.AutoAwesome,
                         contentDescription = "Complete",
                         modifier = Modifier.size(64.dp),
-                        tint = WisdomGold
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -522,20 +524,20 @@ private fun NoMoreCardsState(
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold
                         ),
-                        color = WisdomCharcoal
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Has revisado toda la sabiduría de hoy",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = WisdomTaupe,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = onRefreshClick,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = WisdomGold
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null)
@@ -566,7 +568,7 @@ private fun ProgressIndicator(
                     .weight(1f)
                     .height(3.dp)
                     .background(
-                        color = if (index < currentIndex) WisdomGold else WisdomGold.copy(alpha = 0.3f),
+                        color = if (index < currentIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                         shape = RoundedCornerShape(2.dp)
                     )
             )
@@ -590,8 +592,8 @@ private fun BottomActionButtons(
         // Pass button
         FloatingActionButton(
             onClick = onPassClick,
-            containerColor = Color.White,
-            contentColor = WisdomError,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.error,
             modifier = Modifier.size(56.dp),
             elevation = FloatingActionButtonDefaults.elevation(
                 defaultElevation = 8.dp
@@ -607,8 +609,8 @@ private fun BottomActionButtons(
         // Super like button (center, bigger)
         FloatingActionButton(
             onClick = onSuperLikeClick,
-            containerColor = WisdomGold,
-            contentColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.surface,
             modifier = Modifier.size(72.dp),
             elevation = FloatingActionButtonDefaults.elevation(
                 defaultElevation = 12.dp
@@ -624,8 +626,8 @@ private fun BottomActionButtons(
         // Like button
         FloatingActionButton(
             onClick = onLikeClick,
-            containerColor = WisdomSuccess,
-            contentColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.tertiary,
+            contentColor = MaterialTheme.colorScheme.surface,
             modifier = Modifier.size(56.dp),
             elevation = FloatingActionButtonDefaults.elevation(
                 defaultElevation = 8.dp
@@ -692,7 +694,7 @@ private fun SwipeableQuoteCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(480.dp)
+            .height(500.dp)
             .offset(y = stackOffset) // Offset del stack
             .scale(stackScale) // Escala del stack
             .alpha(stackAlpha) // Alpha del stack
@@ -752,7 +754,7 @@ private fun SwipeableQuoteCard(
                 }
             },
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.95f)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (isActive) 16.dp else (8 - stackLevel * 2).dp
@@ -767,9 +769,9 @@ private fun SwipeableQuoteCard(
                     .background(
                         Brush.linearGradient(
                             colors = listOf(
-                                WisdomGold.copy(alpha = 0.08f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
                                 Color.Transparent,
-                                WisdomChampagne.copy(alpha = 0.12f)
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.12f)
                             ),
                             start = Offset(0f, 0f),
                             end = Offset(1000f, 1000f)
@@ -780,86 +782,88 @@ private fun SwipeableQuoteCard(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(16.dp)
             ) {
-                // Category badge
+                // Category badge at top
                 Surface(
-                    color = WisdomGold.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(20.dp)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Text(
                         text = "${getCategoryEmoji(quote.category)} ${quote.category}",
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.SemiBold
                         ),
-                        color = WisdomCharcoal,
+                        color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Quote text with quotes decoration
+                // Quote text - direct approach for maximum compatibility
                 Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "\"",
-                        style = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = 80.sp,
-                            lineHeight = 60.sp
-                        ),
-                        color = WisdomGold.copy(alpha = 0.3f),
-                        modifier = Modifier.offset(x = (-10).dp, y = 10.dp)
-                    )
-
-                    Text(
-                        text = quote.text,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontSize = 20.sp,
-                            lineHeight = 28.sp,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center
-                        ),
-                        color = WisdomCharcoal,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
+                    // Background for better contrast on problematic devices
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = quote.text,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 18.sp,
+                                lineHeight = 26.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 12.dp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Author with decorative line
+                // Author at bottom - guaranteed visible with background
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+                    // Simple decorative line
                     Box(
                         modifier = Modifier
                             .width(60.dp)
-                            .height(2.dp)
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        WisdomGold,
-                                        Color.Transparent
-                                    )
-                                )
-                            )
+                            .height(3.dp)
+                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp))
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = quote.author,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 0.02.em
-                        ),
-                        color = WisdomTaupe,
-                        textAlign = TextAlign.Center
-                    )
+                    // Author with background for visibility
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = quote.author,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                        )
+                    }
                 }
             }
 
@@ -875,7 +879,7 @@ private fun SwipeableQuoteCard(
                         .align(Alignment.TopEnd)
                         .padding(16.dp)
                         .background(
-                            WisdomError.copy(alpha = 0.9f),
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.9f),
                             CircleShape
                         )
                         .padding(8.dp)
@@ -883,7 +887,7 @@ private fun SwipeableQuoteCard(
                     Icon(
                         Icons.Filled.Favorite,
                         contentDescription = "Favorited",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.surface,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -900,7 +904,7 @@ private fun BoxScope.SwipeIndicators(offsetX: Float, offsetY: Float) {
                 .align(Alignment.CenterEnd)
                 .padding(32.dp)
                 .background(
-                    WisdomSuccess.copy(alpha = 0.1f),
+                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f),
                     CircleShape
                 )
                 .padding(16.dp)
@@ -908,7 +912,7 @@ private fun BoxScope.SwipeIndicators(offsetX: Float, offsetY: Float) {
             Icon(
                 Icons.Default.Favorite,
                 contentDescription = "Like",
-                tint = WisdomSuccess,
+                tint = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier
                     .size(48.dp)
                     .rotate(15f)
@@ -922,7 +926,7 @@ private fun BoxScope.SwipeIndicators(offsetX: Float, offsetY: Float) {
                 .align(Alignment.CenterStart)
                 .padding(32.dp)
                 .background(
-                    WisdomError.copy(alpha = 0.1f),
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
                     CircleShape
                 )
                 .padding(16.dp)
@@ -930,7 +934,7 @@ private fun BoxScope.SwipeIndicators(offsetX: Float, offsetY: Float) {
             Icon(
                 Icons.Default.Close,
                 contentDescription = "Pass",
-                tint = WisdomError,
+                tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier
                     .size(48.dp)
                     .rotate(-15f)
@@ -944,7 +948,7 @@ private fun BoxScope.SwipeIndicators(offsetX: Float, offsetY: Float) {
                 .align(Alignment.TopCenter)
                 .padding(32.dp)
                 .background(
-                    WisdomGold.copy(alpha = 0.1f),
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     CircleShape
                 )
                 .padding(16.dp)
@@ -952,7 +956,7 @@ private fun BoxScope.SwipeIndicators(offsetX: Float, offsetY: Float) {
             Icon(
                 Icons.Default.Star,
                 contentDescription = "Super Like",
-                tint = WisdomGold,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(48.dp)
             )
         }

@@ -133,6 +133,34 @@ class HomeViewModel @Inject constructor(
     fun activatePremium() {
         adMobManager.activatePremium()
     }
+
+    /**
+     * Generar nuevas citas para el modo swipeable
+     */
+    fun generateNewQuotes() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            
+            try {
+                // Limpiar la cita del día actual para forzar nueva generación
+                quoteRepository.resetTodayQuotes()
+                
+                // Cargar nueva cita del día
+                val quote = quoteRepository.getOrCreateTodayQuote()
+                
+                _uiState.value = _uiState.value.copy(
+                    todayQuote = quote,
+                    isLoading = false,
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "No pudimos cargar nuevas citas. Verifica tu conexión e intenta de nuevo."
+                )
+            }
+        }
+    }
 }
 
 /**

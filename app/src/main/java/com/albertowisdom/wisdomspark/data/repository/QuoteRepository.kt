@@ -142,6 +142,27 @@ class QuoteRepository @Inject constructor(
     suspend fun updateQuote(quote: Quote) {
         quoteDao.updateQuote(quote.toEntity())
     }
+    
+    /**
+     * Insertar cita
+     */
+    suspend fun insertQuote(quote: Quote) {
+        quoteDao.insertQuote(quote.toEntity())
+    }
+    
+    /**
+     * Insertar o actualizar cita (usa REPLACE de Room)
+     */
+    suspend fun insertOrUpdateQuote(quote: Quote) {
+        quoteDao.insertQuote(quote.toEntity()) // Room ya maneja INSERT OR REPLACE
+    }
+    
+    /**
+     * Obtener cita por ID
+     */
+    suspend fun getQuoteById(id: Long): Quote? {
+        return quoteDao.getQuoteById(id)?.toQuote()
+    }
 
     // ========== FAVORITOS ==========
     

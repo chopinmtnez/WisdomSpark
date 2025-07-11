@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,26 +35,18 @@ class CategoriesViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             
             try {
-                // Obtener todas las categorías con sus counts
-                val categories = listOf(
-                    CategoryItem("Motivación", 15),
-                    CategoryItem("Vida", 12),
-                    CategoryItem("Sueños", 8),
-                    CategoryItem("Perseverancia", 10),
-                    CategoryItem("Educación", 6),
-                    CategoryItem("Creatividad", 7),
-                    CategoryItem("Éxito", 9),
-                    CategoryItem("Autenticidad", 5),
-                    CategoryItem("Felicidad", 11),
-                    CategoryItem("Sabiduría", 13),
-                    CategoryItem("Confianza", 8),
-                    CategoryItem("Progreso", 6),
-                    CategoryItem("Excelencia", 7),
-                    CategoryItem("Acción", 9)
-                )
+                // Obtener todas las categorías disponibles
+                val allCategories = quoteRepository.getAllCategories()
+                
+                // Crear lista de categorías con sus counts reales
+                val categoriesWithCounts = allCategories.map { categoryName ->
+                    // Obtener el count actual para esta categoría
+                    val quotes = quoteRepository.getQuotesByCategory(categoryName).first()
+                    CategoryItem(categoryName, quotes.size)
+                }
                 
                 _uiState.value = _uiState.value.copy(
-                    categories = categories,
+                    categories = categoriesWithCounts,
                     isLoading = false
                 )
                 

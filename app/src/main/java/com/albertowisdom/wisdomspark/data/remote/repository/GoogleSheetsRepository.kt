@@ -23,10 +23,9 @@ class GoogleSheetsRepository @Inject constructor(
     companion object {
         private const val TAG = "GoogleSheetsRepository"
         
-        // TODO: Configurar con tus propias credenciales
-        // Obtén tu API key en: https://console.cloud.google.com/apis/credentials
-        const val DEFAULT_API_KEY = "YOUR_GOOGLE_SHEETS_API_KEY_HERE"
-        const val DEFAULT_SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE"
+        // Usando credenciales de GoogleSheetsApi como fallback
+        const val DEFAULT_API_KEY = GoogleSheetsApi.DEFAULT_API_KEY
+        const val DEFAULT_SPREADSHEET_ID = GoogleSheetsApi.DEFAULT_SPREADSHEET_ID
         
         // Para testing (usar hojas públicas de Google)
         const val TEST_API_KEY = "AIzaSyBe1D-AsJPPsqr15sXo9tVQKxNLEEHfnBs" // Ejemplo público
@@ -47,7 +46,7 @@ class GoogleSheetsRepository @Inject constructor(
     ): SyncResult = withContext(Dispatchers.IO) {
         
         try {
-            Log.d(TAG, "Iniciando sincronización de citas...")
+            Log.d(TAG, "Iniciando sincronización de contenido...")
             
             // Verificar si ya hay datos y no se fuerza actualización
             if (!forceUpdate && quoteDao.getQuotesCount() > 0) {
@@ -62,7 +61,7 @@ class GoogleSheetsRepository @Inject constructor(
             val pingResponse = api.ping(spreadsheetId, apiKey)
             if (!pingResponse.isSuccessful) {
                 Log.e(TAG, "Error de conectividad: ${pingResponse.code()}")
-                return@withContext SyncResult.Error("Error de conectividad con Google Sheets")
+                return@withContext SyncResult.Error("Error de conectividad con el servidor")
             }
             
             // Obtener citas desde Google Sheets
@@ -109,12 +108,12 @@ class GoogleSheetsRepository @Inject constructor(
                         )
                         
                     } else {
-                        Log.w(TAG, "No se encontraron citas válidas en Google Sheets")
+                        Log.w(TAG, "No se encontraron citas válidas en el servidor")
                         SyncResult.Error("No se encontraron citas válidas")
                     }
                 } else {
-                    Log.e(TAG, "Respuesta vacía de Google Sheets")
-                    SyncResult.Error("Respuesta vacía de Google Sheets")
+                    Log.e(TAG, "Respuesta vacía del servidor")
+                    SyncResult.Error("Respuesta vacía del servidor")
                 }
             } else {
                 val errorMsg = "Error HTTP ${response.code()}: ${response.message()}"

@@ -36,7 +36,8 @@ import java.util.*
 fun HomeScreen(
     adMobManager: AdMobManager,
     viewModel: HomeViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userPreferences: com.albertowisdom.wisdomspark.data.preferences.UserPreferences? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -63,9 +64,9 @@ fun HomeScreen(
         Log.d("AdMob", "AdMob inicializado")
     }
 
-    // Gradiente de fondo
+    // Gradiente de fondo que respeta el tema
     val backgroundGradient = Brush.linearGradient(
-        colors = getWisdomGradientColors(),
+        colors = getThemedGradientColors(),
         start = androidx.compose.ui.geometry.Offset(0f, 0f),
         end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
     )
@@ -133,7 +134,8 @@ fun HomeScreen(
                                 if (context is androidx.activity.ComponentActivity) {
                                     adMobManager.showInterstitialAd(context, force = true)
                                 }
-                            }
+                            },
+                            userPreferences = userPreferences
                         )
                     }
                     
@@ -149,7 +151,7 @@ fun HomeScreen(
                             Text(
                                 text = "Estado inesperado",
                                 style = MaterialTheme.typography.headlineSmall,
-                                color = WisdomError
+                                color = MaterialTheme.colorScheme.error
                             )
                             
                             Spacer(modifier = Modifier.height(16.dp))
@@ -157,7 +159,7 @@ fun HomeScreen(
                             Text(
                                 text = "Debug: isLoading=${uiState.isLoading}, error=${uiState.error}, quote=${uiState.todayQuote}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = WisdomTaupe
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             
                             Spacer(modifier = Modifier.height(16.dp))
@@ -165,7 +167,7 @@ fun HomeScreen(
                             Button(
                                 onClick = { viewModel.loadTodayQuote() },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = WisdomGold
+                                    containerColor = MaterialTheme.colorScheme.primary
                                 )
                             ) {
                                 Text("Cargar Cita")
@@ -212,7 +214,7 @@ private fun HeaderSection() {
             text = "WisdomSpark",
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold,
-                color = WisdomCharcoal
+                color = MaterialTheme.colorScheme.onBackground
             ),
             textAlign = TextAlign.Center
         )
@@ -222,7 +224,7 @@ private fun HeaderSection() {
         Text(
             text = today,
             style = MaterialTheme.typography.bodyLarge.copy(
-                color = WisdomTaupe,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
             ),
             textAlign = TextAlign.Center
@@ -242,7 +244,7 @@ private fun LoadingSection(onRetryClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CircularProgressIndicator(
-            color = WisdomGold,
+            color = MaterialTheme.colorScheme.primary,
             strokeWidth = 3.dp,
             modifier = Modifier.size(48.dp)
         )
@@ -252,7 +254,7 @@ private fun LoadingSection(onRetryClick: () -> Unit) {
         Text(
             text = "Preparando tu sabiduría diaria...",
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = WisdomTaupe
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             textAlign = TextAlign.Center
         )
@@ -262,7 +264,7 @@ private fun LoadingSection(onRetryClick: () -> Unit) {
         OutlinedButton(
             onClick = onRetryClick,
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = WisdomGold
+                contentColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Icon(
@@ -293,7 +295,7 @@ private fun ErrorSection(
         Text(
             text = "Oops...",
             style = MaterialTheme.typography.headlineSmall.copy(
-                color = WisdomError,
+                color = MaterialTheme.colorScheme.error,
                 fontWeight = FontWeight.Bold
             ),
             textAlign = TextAlign.Center
@@ -304,7 +306,7 @@ private fun ErrorSection(
         Text(
             text = error,
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = WisdomTaupe
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             textAlign = TextAlign.Center
         )
@@ -314,8 +316,8 @@ private fun ErrorSection(
         Button(
             onClick = onRetryClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = WisdomGold,
-                contentColor = Color.White
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Icon(
@@ -336,12 +338,14 @@ private fun ErrorSection(
 private fun QuoteSection(
     quote: com.albertowisdom.wisdomspark.data.models.Quote,
     onFavoriteClick: () -> Unit,
-    onShareClick: () -> Unit
+    onShareClick: () -> Unit,
+    userPreferences: com.albertowisdom.wisdomspark.data.preferences.UserPreferences? = null
 ) {
     QuoteCard(
         quote = quote,
         onFavoriteClick = onFavoriteClick,
         onShareClick = onShareClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        userPreferences = userPreferences
     )
 }

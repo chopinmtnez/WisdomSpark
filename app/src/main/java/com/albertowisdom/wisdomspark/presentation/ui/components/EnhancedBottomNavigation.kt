@@ -10,16 +10,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +35,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,10 +50,14 @@ import com.albertowisdom.wisdomspark.presentation.navigation.Screen
 @Composable
 fun EnhancedBottomNavigation(
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userPreferences: UserPreferences? = null
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    
+    // Obtener el estado de las preferencias de feedback háptico
+    val isHapticEnabled by (userPreferences?.isHapticFeedbackEnabled?.collectAsState(initial = true) ?: remember { mutableStateOf(true) })
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -56,14 +66,8 @@ fun EnhancedBottomNavigation(
     ) {
         Box(
             modifier = Modifier
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                            MaterialTheme.colorScheme.surface
-                        )
-                    )
-                )
+                .background(MaterialTheme.colorScheme.surface)
+                .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(vertical = 8.dp)
         ) {
             Row(
@@ -77,15 +81,19 @@ fun EnhancedBottomNavigation(
                         isSelected = currentRoute == item.route,
                         onClick = {
                             if (currentRoute != item.route) {
+                                println("🔄 Navigating from '$currentRoute' to '${item.route}'")
                                 navController.navigate(item.route) {
-                                    popUpTo(Screen.Home.route) {
+                                    popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
+                            } else {
+                                println("🔄 Already on '${item.route}', no navigation needed")
                             }
-                        }
+                        },
+                        isHapticEnabled = isHapticEnabled
                     )
                 }
             }
@@ -97,7 +105,8 @@ fun EnhancedBottomNavigation(
 private fun NavigationItem(
     item: BottomNavItem,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isHapticEnabled: Boolean = true
 ) {
     val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
@@ -136,7 +145,9 @@ private fun NavigationItem(
             .selectable(
                 selected = isSelected,
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (isHapticEnabled) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
                     onClick()
                 },
                 role = Role.Tab,
@@ -217,4 +228,9 @@ private val navigationItems = listOf(
         emoji = "⚙️",
         selectedEmoji = "⚙️"
     )
-)
+).also { items ->
+    println("📱 Navigation items configured:")
+    items.forEach { item ->
+        println("  - ${item.title}: ${item.route}")
+    }
+}

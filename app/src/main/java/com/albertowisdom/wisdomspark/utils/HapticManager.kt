@@ -5,6 +5,9 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
@@ -131,3 +134,4 @@ fun HapticFeedback.performSelection() {
 fun HapticFeedback.performSuccess() {
     performHapticFeedback(HapticFeedbackType.LongPress)
 }
+

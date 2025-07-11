@@ -35,9 +35,9 @@ fun CategoriesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
-    // Gradiente de fondo
+    // Gradiente de fondo que respeta el tema
     val backgroundGradient = Brush.linearGradient(
-        colors = getWisdomGradientColors(),
+        colors = getThemedGradientColors(),
         start = androidx.compose.ui.geometry.Offset(0f, 0f),
         end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
     )
@@ -61,7 +61,7 @@ fun CategoriesScreen(
                     text = "📚 Categorías",
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = WisdomCharcoal
+                        color = MaterialTheme.colorScheme.onBackground
                     ),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -72,7 +72,7 @@ fun CategoriesScreen(
                 Text(
                     text = "Explora citas por temática",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = WisdomTaupe
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -161,7 +161,7 @@ private fun CategoryCard(
             .aspectRatio(1f),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.9f)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         onClick = onClick
@@ -183,7 +183,7 @@ private fun CategoryCard(
                 text = category.name,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = WisdomCharcoal
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
                 textAlign = TextAlign.Center
             )
@@ -193,7 +193,7 @@ private fun CategoryCard(
             Text(
                 text = "${category.count} citas",
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = WisdomTaupe
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 textAlign = TextAlign.Center
             )
@@ -212,14 +212,14 @@ private fun LoadingCategoriesSection() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             CircularProgressIndicator(
-                color = WisdomGold,
+                color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 3.dp
             )
             
             Text(
                 text = "Cargando categorías...",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = WisdomTaupe
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
         }
@@ -243,7 +243,7 @@ private fun EmptyCategoriesSection(
         Text(
             text = "No hay categorías disponibles",
             style = MaterialTheme.typography.titleMedium.copy(
-                color = WisdomCharcoal,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Medium
             )
         )
@@ -251,7 +251,7 @@ private fun EmptyCategoriesSection(
         Button(
             onClick = onRetryClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = WisdomGold
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Text("Reintentar")

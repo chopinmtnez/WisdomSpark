@@ -39,6 +39,7 @@ fun EnhancedHomeScreen(
     adMobManager: AdMobManager,
     userPreferences: UserPreferences,
     viewModel: HomeViewModel = hiltViewModel(),
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -96,6 +97,7 @@ fun EnhancedHomeScreen(
                 SwipeableHomeScreen(
                     adMobManager = adMobManager,
                     viewModel = viewModel,
+                    onNavigateToSettings = onNavigateToSettings,
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
@@ -120,7 +122,7 @@ fun EnhancedHomeScreen(
             },
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(16.dp)
+                .padding(top = 80.dp, end = 16.dp)
         )
         
         // Indicador de modo actual
@@ -128,7 +130,7 @@ fun EnhancedHomeScreen(
             isSwipeableMode = isSwipeableMode,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(16.dp)
+                .padding(top = 80.dp, start = 16.dp)
         )
     }
 }
