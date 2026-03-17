@@ -43,6 +43,9 @@ interface QuoteDao {
     @Query("SELECT * FROM quotes WHERE dateShown IS NULL ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomUnshownQuote(): QuoteEntity?
 
+    @Query("SELECT * FROM quotes WHERE dateShown IS NULL AND language = :language ORDER BY RANDOM() LIMIT 1")
+    suspend fun getRandomUnshownQuoteByLanguage(language: String): QuoteEntity?
+
     @Query("UPDATE quotes SET dateShown = NULL")
     suspend fun resetAllDatesShown()
 
@@ -63,14 +66,26 @@ interface QuoteDao {
     @Query("SELECT * FROM quotes ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomQuote(): QuoteEntity?
 
+    @Query("SELECT * FROM quotes WHERE language = :language ORDER BY RANDOM() LIMIT 1")
+    suspend fun getRandomQuoteByLanguage(language: String): QuoteEntity?
+
     @Query("SELECT * FROM quotes WHERE id NOT IN (:excludeIds) ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomQuoteExcluding(excludeIds: List<Long>): QuoteEntity?
+
+    @Query("SELECT * FROM quotes WHERE id NOT IN (:excludeIds) AND language = :language ORDER BY RANDOM() LIMIT 1")
+    suspend fun getRandomQuoteExcludingByLanguage(excludeIds: List<Long>, language: String): QuoteEntity?
 
     @Query("SELECT * FROM quotes WHERE id NOT IN (:excludeIds) ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomQuotesExcluding(excludeIds: List<Long>, count: Int): List<QuoteEntity>
 
+    @Query("SELECT * FROM quotes WHERE id NOT IN (:excludeIds) AND language = :language ORDER BY RANDOM() LIMIT :count")
+    suspend fun getRandomQuotesExcludingByLanguage(excludeIds: List<Long>, language: String, count: Int): List<QuoteEntity>
+
     @Query("SELECT * FROM quotes ORDER BY RANDOM() LIMIT :limit")
     suspend fun getRandomQuotes(limit: Int): List<QuoteEntity>
+
+    @Query("SELECT * FROM quotes WHERE language = :language ORDER BY RANDOM() LIMIT :limit")
+    suspend fun getRandomQuotesByLanguage(language: String, limit: Int): List<QuoteEntity>
 
     // ========== FAVORITOS ==========
 
@@ -91,11 +106,20 @@ interface QuoteDao {
     @Query("SELECT * FROM quotes WHERE category = :category")
     suspend fun getQuotesByCategorySync(category: String): List<QuoteEntity>
 
+    @Query("SELECT * FROM quotes WHERE category = :category AND language = :language ORDER BY id DESC")
+    fun getQuotesByCategoryAndLanguage(category: String, language: String): Flow<List<QuoteEntity>>
+
     @Query("SELECT DISTINCT category FROM quotes ORDER BY category ASC")
     suspend fun getAllCategories(): List<String>
+    
+    @Query("SELECT DISTINCT category FROM quotes WHERE language = :language ORDER BY category ASC")
+    suspend fun getAllCategoriesByLanguage(language: String): List<String>
 
     @Query("SELECT category, COUNT(*) as count FROM quotes GROUP BY category ORDER BY count DESC")
     suspend fun getCategoriesWithCount(): List<CategoryCount>
+    
+    @Query("SELECT category, COUNT(*) as count FROM quotes WHERE language = :language GROUP BY category ORDER BY count DESC")
+    suspend fun getCategoriesWithCountByLanguage(language: String): List<CategoryCount>
 
     // ========== BÚSQUEDA ==========
 

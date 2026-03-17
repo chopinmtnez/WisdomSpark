@@ -3,8 +3,10 @@ package com.albertowisdom.wisdomspark.utils
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.albertowisdom.wisdomspark.R
 
 /**
  * Utilidades para optimización de performance en Compose
@@ -138,13 +140,16 @@ object AccessibilityUtils {
         category: String,
         isFavorite: Boolean
     ): String {
-        return remember(text, author, category, isFavorite) {
+        val categoryLabel = stringResource(R.string.accessibility_quote_of_category, category)
+        val authorLabel = stringResource(R.string.accessibility_by_author, author)
+        val favoriteLabel = if (isFavorite) stringResource(R.string.accessibility_favorited) else ""
+        return remember(text, author, category, isFavorite, categoryLabel, authorLabel, favoriteLabel) {
             buildString {
-                append("Cita de $category: ")
+                append("$categoryLabel ")
                 append(text)
-                append(". Por $author.")
-                if (isFavorite) {
-                    append(" Marcada como favorita.")
+                append(". $authorLabel")
+                if (favoriteLabel.isNotEmpty()) {
+                    append(" $favoriteLabel")
                 }
             }
         }
@@ -155,8 +160,9 @@ object AccessibilityUtils {
         categoryName: String,
         quoteCount: Int
     ): String {
-        return remember(categoryName, quoteCount) {
-            "Categoría $categoryName con $quoteCount citas disponibles"
+        val description = stringResource(R.string.accessibility_category_with_quotes, categoryName, quoteCount)
+        return remember(categoryName, quoteCount, description) {
+            description
         }
     }
 }

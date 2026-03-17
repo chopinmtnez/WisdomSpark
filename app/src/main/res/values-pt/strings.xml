@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WisdomSpark</string>
+    
+    <!-- Navigation -->
+    <string name="today_quote">Citação do dia</string>
+    <string name="categories">Categorias</string>
+    <string name="favorites">Favoritos</string>
+    <string name="settings">Configurações</string>
+    
+    <!-- Actions -->
+    <string name="share_quote">Compartilhar citação</string>
+    <string name="add_to_favorites">Adicionar aos favoritos</string>
+    <string name="remove_from_favorites">Remover dos favoritos</string>
+    <string name="refresh_quote">Nova citação</string>
+    
+    <!-- States -->
+    <string name="no_quotes_available">Nenhuma citação disponível</string>
+    <string name="loading">Carregando…</string>
+    <string name="error_loading_quote">Erro ao carregar citação</string>
+    <string name="try_again">Tentar novamente</string>
+    
+    <!-- Messages -->
+    <string name="daily_inspiration">Sua inspiração diária</string>
+    <string name="wisdom_message">Sabedoria para o seu dia</string>
+    
+    <!-- Language specific -->
+    <string name="security_check_failed">Falha na verificação de segurança</string>
+    <string name="language_spanish">Espanhol</string>
+    <string name="language_english">Inglês</string>
+    <string name="language_french">Francês</string>
+    <string name="language_german">Alemão</string>
+    <string name="language_portuguese">Português</string>
+    <string name="language_italian">Italiano</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">⚙️ Configurações</string>
+    <string name="settings_subtitle">Personalize sua experiência WisdomSpark</string>
+    <string name="user_experience">🎨 Experiência do Usuário</string>
+    <string name="swipeable_mode">Modo Deslizante</string>
+    <string name="swipeable_mode_desc">Interface tipo Swipe para explorar citações</string>
+    <string name="dark_mode">Modo Escuro</string>
+    <string name="dark_mode_desc">Tema escuro para melhor conforto visual</string>
+    <string name="vibration">Vibração</string>
+    <string name="vibration_desc">Feedback tátil nas interações</string>
+    <string name="language">Idioma</string>
+    <string name="notifications_section">🔔 Notificações</string>
+    <string name="daily_notifications">Notificações Diárias</string>
+    <string name="daily_notifications_desc">Receba sua dose diária de sabedoria</string>
+    <string name="notification_time">Horário da Notificação</string>
+    <string name="premium_section">💎 Premium</string>
+    <string name="premium_title">WisdomSpark Premium</string>
+    <string name="premium_desc">Sem anúncios + recursos exclusivos</string>
+    <string name="info_section">ℹ️ Informação</string>
+    <string name="share_app">Compartilhar App</string>
+    <string name="share_app_desc">Compartilhe WisdomSpark com seus amigos</string>
+    <string name="contact">Contato</string>
+    <string name="contact_desc">Você tem alguma sugestão?</string>
+    <string name="about">Sobre</string>
+    <string name="about_desc">WisdomSpark - Sabedoria diária</string>
+    <string name="select_language">🌍 Selecionar Idioma</string>
+    <string name="select_language_desc">Escolha seu idioma preferido para citações e interface</string>
+    <string name="close">Fechar</string>
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    
+    <!-- Home Screen -->
+    <string name="preparing_wisdom">Preparando sua sabedoria diária…</string>
+    <string name="unexpected_state">Estado inesperado</string>
+    <string name="oops">Ops…</string>
+    
+    <!-- Error states -->
+    <string name="network_error">Erro de conexão</string>
+    <string name="generic_error">Ocorreu um erro</string>
+    <string name="retry">Tentar novamente</string>
+    
+    <!-- Date and time -->
+    <string name="good_morning">Bom dia</string>
+    <string name="good_afternoon">Boa tarde</string>
+    <string name="good_evening">Boa noite</string>
+    <string name="good_night">Boa madrugada</string>
+    <string name="today">Hoje</string>
+    <string name="yesterday">Ontem</string>
+    <string name="days_ago">%d dias atrás</string>
+    
+    <!-- Day motivations -->
+    <string name="monday_motivation">Novo começo, novas oportunidades!</string>
+    <string name="tuesday_motivation">A constância é a chave do sucesso</string>
+    <string name="wednesday_motivation">Meio da semana, continue!</string>
+    <string name="thursday_motivation">Quase chegando ao fim!</string>
+    <string name="friday_motivation">O esforço da semana está valendo a pena!</string>
+    <string name="saturday_motivation">Tempo para relaxar e refletir</string>
+    <string name="sunday_motivation">Prepare-se para uma nova semana incrível</string>
+    <string name="default_motivation">Cada dia é uma nova oportunidade</string>
+    
+    <!-- Categories Screen -->
+    <string name="categories_title">📚 Categorias</string>
+    <string name="categories_subtitle">Explore citações por tema</string>
+    <string name="quotes_count">%d citações</string>
+    <string name="quotes_available">%d citações disponíveis</string>
+    <string name="loading_categories">Carregando categorias…</string>
+    <string name="no_categories_available">Nenhuma categoria disponível</string>
+    
+    <!-- Favorites Screen -->
+    <string name="favorites_title">❤️ Meus Favoritos</string>
+    <string name="saved_quotes_count">%d citações salvas</string>
+    <string name="loading_favorites">Carregando seus favoritos…</string>
+    <string name="no_favorites_yet">Você não tem favoritos ainda</string>
+    <string name="favorites_instruction">Marque com ❤️ as citações que mais te inspiram para salvá-las aqui</string>
+    
+    <!-- Home Screen specific -->
+    <string name="app_title">WisdomSpark</string>
+    <string name="swipe_to_discover">Deslize para descobrir</string>
+    <string name="classic_mode">Clássico</string>
+    <string name="swipe_mode">Deslizar</string>
+    <string name="preparing_wisdom_ellipsis">Preparando sabedoria…</string>
+    <string name="add_remove_favorites">Adicionar/Remover dos favoritos</string>
+    <string name="more_wisdom">Mais Sabedoria</string>
+    <string name="amazing">Incrível!</string>
+    <string name="reviewed_all_wisdom">Você revisou toda a sabedoria de hoje</string>
+    <string name="refresh">Atualizar</string>
+    <string name="settings_security_title">\uD83D\uDD12 Segurança</string>
+    <string name="security_status">Estado da segurança</string>
+    <string name="verify_security">Verificar segurança</string>
+    <string name="verifying_security">Verificar a segurança…</string>
+    <string name="play_services">Play Services</string>
+    <string name="available">Disponível</string>
+    <string name="not_available">Indisponível</string>
+    <string name="app_integrity">Integridade da aplicação</string>
+    <string name="device_integrity">Integridade do dispositivo</string>
+    <string name="verified">Verificado</string>
+    <string name="not_verified">Não verificado</string>
+    <string name="verification_failed">Falha na verificação</string>
+    <string name="secure">Seguro</string>
+    
+    <!-- Onboarding / Language Selection -->
+    <string name="welcome_to_app">Bem-vindo ao WisdomSpark!</string>
+    <string name="choose_language_subtitle">Escolha seu idioma preferido para desfrutar de citações inspiradoras</string>
+    <string name="continue_button">Continuar</string>
+    <string name="selected">Selecionado</string>
+    <string name="change_language_later">Você pode alterar o idioma mais tarde nas configurações</string>
+    <string name="preparing_data">Preparando dados...</string>
+    <string name="continuing">Continuando...</string>
+    <string name="notification_permission_request">Para receber notificações, precisamos da sua permissão.\n\nVocê pode alterar esta configuração a qualquer momento nas Configurações.</string>
+    
+    <!-- Share Utils -->
+    <string name="daily_wisdom">Sabedoria diária</string>
+    <string name="share_hashtags">#WisdomSpark #SabedoriaDiaria</string>
+    <string name="swipe_up_for_more">Deslize para cima para mais sabedoria</string>
+    
+    <!-- Notification Permission -->
+    <string name="yes_i_want_inspiration">✨ Sim, quero inspiração</string>
+    <string name="no_thanks">Não, obrigado</string>
+    
+    <!-- Auto Notification Permission Handler -->
+    <string name="notification_auto_request_title">🔔 Notificações Diárias</string>
+    <string name="notification_auto_request_message">Gostaria de receber uma citação inspiradora todos os dias?\n\nAs notificações vão ajudá-lo a:\n• Manter uma rotina de reflexão diária\n• Não esquecer seu momento de inspiração\n• Descobrir nova sabedoria regularmente\n\nVocê pode alterar esta configuração a qualquer momento nas Configurações.</string>
+    <string name="yes_want_daily_inspiration">✨ Sim, quero inspiração</string>
+    <string name="maybe_later">Não, obrigado</string>
+    
+    <!-- Notification Channel -->
+    <string name="notification_channel_name">Citações Diárias</string>
+    <string name="notification_channel_description">Notificações com sua dose diária de sabedoria</string>
+    
+    <!-- Collections -->
+    <string name="collection_name_hint">Nome da coleção</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_notification_time_title">Horário da Notificação</string>
+    <string name="settings_notification_time_subtitle">Escolha quando deseja receber sua citação diária</string>
+    <string name="premium_all_features">Todos os recursos desbloqueados!</string>
+    <string name="premium_manage_title">Gerenciar Premium</string>
+    <string name="premium_manage_description">Ver detalhes e configurações da sua assinatura</string>
+
+    <!-- Info Dialog -->
+    <string name="info_version">Versão</string>
+    <string name="info_developer">Desenvolvedor</string>
+    <string name="info_description">Descrição</string>
+    <string name="info_developer_name">Alberto Wisdom</string>
+
+    <!-- Accessibility -->
+    <string name="content_description_back">Voltar</string>
+    <string name="content_description_share">Compartilhar citação</string>
+    <string name="content_description_add_favorite">Adicionar aos favoritos</string>
+    <string name="content_description_mode_list">Modo Lista</string>
+    <string name="content_description_mode_swipe">Modo Swipe</string>
+
+    <!-- Swipeable Actions -->
+    <string name="action_pass">Passar</string>
+    <string name="action_super_like">Super Like</string>
+    <string name="action_like">Gostei</string>
+
+    <!-- Categories Detail -->
+    <string name="quotes_count_format">%d citações disponíveis</string>
+
+    <!-- Error States -->
+    <string name="error_unexpected">Ocorreu um erro inesperado</string>
+    <string name="error_load_quote">Não conseguimos carregar sua citação diária. Verifique sua conexão com a internet.</string>
+    <string name="button_retry">Tentar novamente</string>
+    <string name="button_load_quote">Carregar Citação</string>
+    <string name="loading_preparing">Preparando sua sabedoria diária…</string>
+
+    <!-- Share App -->
+    <string name="share_app_subject">Descubra %1$s!</string>
+    <string name="share_app_text">🌟 Eu recomendo %1$s! ✨\n\nUm app de citações inspiradoras e sabedoria diária para te motivar todos os dias.\n\n💝 Baixe e comece sua jornada de inspiração.</string>
+    <string name="share_via">Compartilhar via</string>
+    <string name="feedback_email_subject">Feedback sobre WisdomSpark</string>
+    <string name="feedback_email_body">Olá!\n\nEstou escrevendo do WisdomSpark para compartilhar meu feedback:\n\n[Escreva seus comentários aqui]\n\nInfo do dispositivo:\n- App: WisdomSpark v%1$s\n- Android: %2$s\n- Dispositivo: %3$s</string>
+    <string name="send_feedback">Enviar feedback</string>
+    <!-- Accessibility (dynamic) -->
+    <string name="quote_description">Citação de %1$s: %2$s</string>
+    <string name="quote_category_prefix">Citação de %1$s. </string>
+    <string name="quotes_available_singular">%d citação disponível</string>
+    <string name="quotes_available_plural">%d citações disponíveis</string>
+    <string name="quotes_saved_singular">%d citação salva</string>
+    <string name="quotes_saved_plural">%d citações salvas</string>
+
+    <!-- About Dialog -->
+    <string name="about_version_label">Versão</string>
+    <string name="about_developer_label">Desenvolvedor</string>
+    <string name="about_description_label">Descrição</string>
+    <string name="about_description_text">Sua dose diária de sabedoria e inspiração</string>
+    <string name="about_long_description">WisdomSpark oferece citações inspiradoras cuidadosamente selecionadas para motivá-lo todos os dias.</string>
+    <string name="about_made_with_love">💝 Feito com amor para inspirar e motivar</string>
+
+    <!-- Accessibility - Screen Reader -->
+    <string name="accessibility_quote_of_category">Citação de %1$s.</string>
+    <string name="accessibility_by_author">Por %1$s.</string>
+    <string name="accessibility_favorited">Marcada como favorita.</string>
+    <string name="accessibility_not_favorited">Não está nos favoritos.</string>
+    <string name="accessibility_category_with_quotes">Categoria %1$s com %2$d citações disponíveis</string>
+
+    <string name="error_generating_quotes">Não foi possível carregar novas citações. Verifique sua conexão e tente novamente.</string>
+    <string name="error_syncing_categories">Sincronizando dados para o idioma selecionado…</string>
+    <string name="error_loading_categories">Erro ao carregar categorias. Reinicie o app.</string>
+</resources>

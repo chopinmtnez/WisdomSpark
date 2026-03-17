@@ -17,7 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.albertowisdom.wisdomspark.R
 import com.albertowisdom.wisdomspark.ads.AdMobManager
 import com.albertowisdom.wisdomspark.ads.BannerAdView
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
@@ -58,7 +60,7 @@ fun CategoriesScreen(
             ) {
                 // Header
                 Text(
-                    text = "📚 Categorías",
+                    text = stringResource(R.string.categories_title),
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -70,7 +72,7 @@ fun CategoriesScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Explora citas por temática",
+                    text = stringResource(R.string.categories_subtitle),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
@@ -99,7 +101,7 @@ fun CategoriesScreen(
                     
                     else -> {
                         EmptyCategoriesSection(
-                            onRetryClick = { viewModel.loadCategories() }
+                            onRetryClick = { viewModel.refreshCategories() }
                         )
                     }
                 }
@@ -191,7 +193,7 @@ private fun CategoryCard(
             Spacer(modifier = Modifier.height(4.dp))
             
             Text(
-                text = "${category.count} citas",
+                text = stringResource(R.string.quotes_count, category.count),
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
@@ -217,7 +219,7 @@ private fun LoadingCategoriesSection() {
             )
             
             Text(
-                text = "Cargando categorías...",
+                text = stringResource(R.string.loading_categories),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -241,7 +243,7 @@ private fun EmptyCategoriesSection(
         )
         
         Text(
-            text = "No hay categorías disponibles",
+            text = stringResource(R.string.no_categories_available),
             style = MaterialTheme.typography.titleMedium.copy(
                 color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Medium
@@ -254,7 +256,7 @@ private fun EmptyCategoriesSection(
                 containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
-            Text("Reintentar")
+            Text(stringResource(R.string.retry))
         }
     }
 }

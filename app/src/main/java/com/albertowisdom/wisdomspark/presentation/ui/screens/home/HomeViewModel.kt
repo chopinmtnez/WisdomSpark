@@ -1,15 +1,21 @@
 package com.albertowisdom.wisdomspark.presentation.ui.screens.home
 
 import android.app.Activity
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.albertowisdom.wisdomspark.ads.AdMobManager
+import com.albertowisdom.wisdomspark.data.managers.LanguageManager
 import com.albertowisdom.wisdomspark.data.models.Quote
+import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
 import com.albertowisdom.wisdomspark.data.repository.QuoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,8 +25,14 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val quoteRepository: QuoteRepository,
-    private val adMobManager: AdMobManager
+    private val adMobManager: AdMobManager,
+    private val userPreferences: UserPreferences,
+    private val languageManager: LanguageManager
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "HomeViewModel"
+    }
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -29,37 +41,67 @@ class HomeViewModel @Inject constructor(
     private var userInteractions = 0
 
     init {
-        println("🏠 HomeViewModel inicializado")
-        loadTodayQuote()
+        Log.d(TAG, "HomeViewModel initialized")
+        observeLanguageChanges()
     }
 
     /**
-     * Cargar cita del día
+     * Observa cambios en el idioma y espera a que el LanguageManager complete la sincronización
+     * Ya no realiza sincronización duplicada - el LanguageManager coordina todo centralmente
      */
-    fun loadTodayQuote() {
-        println("🔄 Cargando cita del día...")
+    private fun observeLanguageChanges() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            println("📊 Estado cambiado a loading: ${_uiState.value}")
-
-            try {
-                val quote = quoteRepository.getOrCreateTodayQuote()
-                println("✅ Cita obtenida: ${quote.text.take(50)}...")
-                _uiState.value = _uiState.value.copy(
-                    todayQuote = quote,
-                    isLoading = false,
-                    error = null
-                )
-                println("📊 Estado final: ${_uiState.value}")
-            } catch (e: Exception) {
-                println("❌ Error cargando cita: ${e.message}")
-                e.printStackTrace()
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = "No pudimos cargar tu cita diaria. Verifica tu conexión e intenta de nuevo."
-                )
-                println("📊 Estado error: ${_uiState.value}")
+            combine(
+                userPreferences.appLanguage,
+                languageManager.languageChangeInProgress
+            ) { language, syncInProgress ->
+                Log.d(TAG, "Language: $language, syncInProgress: $syncInProgress")
+                Pair(language, syncInProgress)
+            }.collectLatest { (language, syncInProgress) ->
+                if (!syncInProgress) {
+                    Log.d(TAG, "Sync completed, loading today's quote for: $language")
+                    loadTodayQuote(language)
+                } else {
+                    Log.d(TAG, "Waiting for language sync to complete...")
+                    _uiState.value = _uiState.value.copy(isLoading = true)
+                }
             }
+        }
+    }
+
+    /**
+     * Cargar cita del día para el idioma especificado.
+     * Es suspend fun directa (no lanza coroutine interna) para que collectLatest
+     * pueda cancelarla correctamente al cambiar de idioma.
+     */
+    private suspend fun loadTodayQuote(language: String) {
+        Log.d(TAG, "Loading today's quote for language: $language")
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+        try {
+            val quote = quoteRepository.getOrCreateTodayQuote(language)
+            Log.d(TAG, "Quote loaded for $language: ${quote.text.take(50)}...")
+            _uiState.value = _uiState.value.copy(
+                todayQuote = quote,
+                isLoading = false,
+                error = null
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading quote", e)
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                error = "error_loading_quote" // Clave para que la UI use stringResource()
+            )
+        }
+    }
+
+    /**
+     * Recargar cita del día manualmente
+     */
+    fun refreshTodayQuote() {
+        viewModelScope.launch {
+            val language = userPreferences.appLanguage.first()
+            loadTodayQuote(language)
         }
     }
 
@@ -128,11 +170,9 @@ class HomeViewModel @Inject constructor(
     fun isPremiumUser(): Boolean = !adMobManager.shouldShowAds()
 
     /**
-     * Activar modo premium (para testing o después de compra)
+     * Verificar si el usuario es Premium
      */
-    fun activatePremium() {
-        adMobManager.activatePremium()
-    }
+    fun isPremium(): Boolean = adMobManager.isPremium()
 
     /**
      * Generar nuevas citas para el modo swipeable
@@ -146,7 +186,8 @@ class HomeViewModel @Inject constructor(
                 quoteRepository.resetTodayQuotes()
                 
                 // Cargar nueva cita del día
-                val quote = quoteRepository.getOrCreateTodayQuote()
+                val language = userPreferences.appLanguage.first()
+                val quote = quoteRepository.getOrCreateTodayQuote(language)
                 
                 _uiState.value = _uiState.value.copy(
                     todayQuote = quote,
@@ -156,7 +197,7 @@ class HomeViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "No pudimos cargar nuevas citas. Verifica tu conexión e intenta de nuevo."
+                    error = "error_generating_quotes" // Clave para que la UI use stringResource()
                 )
             }
         }

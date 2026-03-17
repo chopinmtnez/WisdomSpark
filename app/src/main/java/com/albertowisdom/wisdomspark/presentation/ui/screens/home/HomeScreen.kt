@@ -1,6 +1,5 @@
 package com.albertowisdom.wisdomspark.presentation.ui.screens.home
 
-import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -15,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,8 +24,7 @@ import com.albertowisdom.wisdomspark.ads.BannerAdView
 import com.albertowisdom.wisdomspark.presentation.ui.components.QuoteCard
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
 import com.albertowisdom.wisdomspark.utils.ShareUtils
-import java.text.SimpleDateFormat
-import java.util.*
+import com.albertowisdom.wisdomspark.utils.DateUtils
 
 /**
  * Pantalla principal de WisdomSpark con integración AdMob
@@ -41,12 +38,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    
-    // Log del estado para debug
-    LaunchedEffect(uiState) {
-        Log.d("HomeScreen", "🏠 Estado actual: $uiState")
-    }
-    
+
     // Animación de entrada
     val enterAnimation by animateFloatAsState(
         targetValue = 1f,
@@ -59,9 +51,7 @@ fun HomeScreen(
 
     // Inicializar AdMob al crear la pantalla
     LaunchedEffect(Unit) {
-        Log.d("AdMob", "Inicializando AdMob...")
         adMobManager.initialize(context)
-        Log.d("AdMob", "AdMob inicializado")
     }
 
     // Gradiente de fondo que respeta el tema
@@ -97,40 +87,30 @@ fun HomeScreen(
                 // Contenido principal según estado
                 when {
                     uiState.isLoading -> {
-                        Log.d("HomeScreen", "📱 Mostrando LoadingSection")
                         LoadingSection(
-                            onRetryClick = { 
-                                Log.d("HomeScreen", "🔄 Retry clicked")
-                                viewModel.loadTodayQuote() 
-                            }
+                            onRetryClick = { viewModel.refreshTodayQuote() }
                         )
                     }
-                    
+
                     uiState.error != null -> {
-                        Log.d("HomeScreen", "📱 Mostrando ErrorSection: ${uiState.error}")
                         ErrorSection(
-                            error = uiState.error!!, // Safe cast ya que verificamos que no es null
-                            onRetryClick = { 
-                                Log.d("HomeScreen", "🔄 Error retry clicked")
-                                viewModel.loadTodayQuote() 
-                            }
+                            error = uiState.error!!,
+                            onRetryClick = { viewModel.refreshTodayQuote() }
                         )
                     }
-                    
+
                     uiState.todayQuote != null -> {
-                        Log.d("HomeScreen", "📱 Mostrando QuoteSection: ${uiState.todayQuote!!.text.take(30)}...")
+                        val quote = uiState.todayQuote!!
                         QuoteSection(
-                            quote = uiState.todayQuote!!, // Safe cast ya que verificamos que no es null
-                            onFavoriteClick = { 
+                            quote = quote,
+                            onFavoriteClick = {
                                 viewModel.toggleFavorite()
-                                // Mostrar interstitial ocasionalmente
                                 if (context is androidx.activity.ComponentActivity) {
                                     adMobManager.showInterstitialAd(context)
                                 }
                             },
-                            onShareClick = { 
-                                ShareUtils.shareQuote(context, uiState.todayQuote!!) // Safe cast
-                                // Mostrar interstitial al compartir
+                            onShareClick = {
+                                ShareUtils.shareQuote(context, quote)
                                 if (context is androidx.activity.ComponentActivity) {
                                     adMobManager.showInterstitialAd(context, force = true)
                                 }
@@ -138,41 +118,12 @@ fun HomeScreen(
                             userPreferences = userPreferences
                         )
                     }
-                    
+
                     else -> {
-                        // Estado inesperado - mostrar loading con botón para debug
-                        Log.w("HomeScreen", "📱 Estado inesperado: $uiState")
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Estado inesperado",
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            Text(
-                                text = "Debug: isLoading=${uiState.isLoading}, error=${uiState.error}, quote=${uiState.todayQuote}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            Button(
-                                onClick = { viewModel.loadTodayQuote() },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-                                Text("Cargar Cita")
-                            }
-                        }
+                        ErrorSection(
+                            error = "Algo no fue bien. Toca reintentar para cargar tu cita.",
+                            onRetryClick = { viewModel.refreshTodayQuote() }
+                        )
                     }
                 }
                 
@@ -198,10 +149,9 @@ fun HomeScreen(
  */
 @Composable
 private fun HeaderSection() {
-    val today = remember {
-        SimpleDateFormat("EEEE, d 'de' MMMM", Locale.forLanguageTag("es-ES"))
-            .format(Date())
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    val context = LocalContext.current
+    val today = remember(context) {
+        DateUtils.getCurrentDateFormatted(context)
     }
 
     Column(

@@ -5,6 +5,7 @@ data class Quote(
     val text: String,
     val author: String,
     val category: String,
+    val language: String = "es",
     val isFavorite: Boolean = false,
     val dateShown: String? = null
 )

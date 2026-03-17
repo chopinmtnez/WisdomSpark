@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Configuración para desarrollo y producción -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- Dominios de confianza para Play Integrity -->
+        <domain includeSubdomains="true">playintegrity.googleapis.com</domain>
+        <domain includeSubdomains="true">googleapis.com</domain>
+        <domain includeSubdomains="true">google.com</domain>
+        
+        <!-- Tu dominio backend (cambiar por tu servidor real) -->
+        <domain includeSubdomains="true">albertomartinezmartin.com</domain>
+        
+        <!-- Dominios para desarrollo local (remover en producción) -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        
+        <!-- Permitir certificados de desarrollo solo en debug -->
+        <trust-anchors>
+            <certificates src="system"/>
+            <!-- Solo para desarrollo -->
+            <certificates src="user" overridePins="true"/>
+        </trust-anchors>
+    </domain-config>
+    
+    <!-- Configuración base segura -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Debug overrides (solo para builds debug) -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

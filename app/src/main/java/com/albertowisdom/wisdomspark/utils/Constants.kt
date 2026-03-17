@@ -1,7 +1,7 @@
 package com.albertowisdom.wisdomspark.utils
 
 object Constants {
-    const val DATABASE_NAME = "wisdom_spark.db"
+    const val DATABASE_NAME = "wisdomspark_db" // Debe coincidir con WisdomSparkDatabase.DATABASE_NAME
     const val PREFS_NAME = "wisdom_spark_prefs"
     
     // SharedPreferences keys
@@ -25,6 +25,7 @@ object Constants {
         "Confianza",
         "Progreso",
         "Excelencia",
-        "Acción"
+        "Acción",
+        "Liderazgo"
     )
 }

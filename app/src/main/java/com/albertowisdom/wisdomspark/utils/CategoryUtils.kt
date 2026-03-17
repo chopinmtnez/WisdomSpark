@@ -1,10 +1,193 @@
 package com.albertowisdom.wisdomspark.utils
 
 /**
- * Obtiene el emoji correspondiente a una categoría
+ * Mapea cualquier categoría de cualquier idioma a su equivalente español
+ * para obtener el emoji y color correcto
+ */
+fun mapCategoryToSpanish(category: String): String {
+    val normalizedCategory = category.lowercase().trim()
+    
+    return when (normalizedCategory) {
+        // Español (ya está en español)
+        "motivación", "vida", "sueños", "perseverancia", "educación", 
+        "creatividad", "éxito", "autenticidad", "felicidad", "sabiduría",
+        "confianza", "progreso", "excelencia", "acción", "liderazgo",
+        "negocios", "espiritualidad", "amor", "familia", "amistad",
+        "tiempo", "dinero", "salud", "paz", "esperanza", "gratitud",
+        "cambio", "oportunidad", "libertad", "naturaleza" -> normalizedCategory
+        
+        // Inglés -> Español
+        "motivation" -> "motivación"
+        "life" -> "vida"
+        "dreams" -> "sueños"
+        "perseverance" -> "perseverancia"
+        "education" -> "educación"
+        "creativity" -> "creatividad"
+        "success" -> "éxito"
+        "authenticity" -> "autenticidad"
+        "happiness" -> "felicidad"
+        "wisdom" -> "sabiduría"
+        "confidence" -> "confianza"
+        "progress" -> "progreso"
+        "excellence" -> "excelencia"
+        "action" -> "acción"
+        "leadership" -> "liderazgo"
+        "business" -> "negocios"
+        "spirituality" -> "espiritualidad"
+        "love" -> "amor"
+        "family" -> "familia"
+        "friendship" -> "amistad"
+        "time" -> "tiempo"
+        "money" -> "dinero"
+        "health" -> "salud"
+        "peace" -> "paz"
+        "hope" -> "esperanza"
+        "gratitude" -> "gratitud"
+        "change" -> "cambio"
+        "opportunity" -> "oportunidad"
+        "freedom" -> "libertad"
+        "nature" -> "naturaleza"
+        
+        // Francés -> Español
+        "motivation" -> "motivación"  // mismo que inglés
+        "vie" -> "vida"
+        "rêves" -> "sueños"
+        "persévérance" -> "perseverancia"
+        "éducation" -> "educación"
+        "créativité" -> "creatividad"
+        "succès" -> "éxito"
+        "authenticité" -> "autenticidad"
+        "bonheur" -> "felicidad"
+        "sagesse" -> "sabiduría"
+        "confiance" -> "confianza"
+        "progrès" -> "progreso"
+        "excellence" -> "excelencia"  // mismo que inglés
+        "action" -> "acción"  // mismo que inglés
+        "leadership" -> "liderazgo"  // mismo que inglés
+        "affaires" -> "negocios"
+        "spiritualité" -> "espiritualidad"
+        "amour" -> "amor"
+        "famille" -> "familia"
+        "amitié" -> "amistad"
+        "temps" -> "tiempo"
+        "argent" -> "dinero"
+        "santé" -> "salud"
+        "paix" -> "paz"
+        "espoir" -> "esperanza"
+        "gratitude" -> "gratitud"  // mismo que inglés
+        "changement" -> "cambio"
+        "opportunité" -> "oportunidad"
+        "liberté" -> "libertad"
+        "nature" -> "naturaleza"  // mismo que inglés
+        
+        // Alemán -> Español
+        "motivation" -> "motivación"  // mismo que inglés
+        "leben" -> "vida"
+        "träume" -> "sueños"
+        "ausdauer" -> "perseverancia"
+        "bildung" -> "educación"
+        "kreativität" -> "creatividad"
+        "erfolg" -> "éxito"
+        "authentizität" -> "autenticidad"
+        "glück" -> "felicidad"
+        "weisheit" -> "sabiduría"
+        "vertrauen" -> "confianza"
+        "fortschritt" -> "progreso"
+        "exzellenz" -> "excelencia"
+        "aktion" -> "acción"
+        "führung" -> "liderazgo"
+        "geschäft" -> "negocios"
+        "spiritualität" -> "espiritualidad"
+        "liebe" -> "amor"
+        "familie" -> "familia"  // mismo que inglés
+        "freundschaft" -> "amistad"
+        "zeit" -> "tiempo"
+        "geld" -> "dinero"
+        "gesundheit" -> "salud"
+        "frieden" -> "paz"
+        "hoffnung" -> "esperanza"
+        "dankbarkeit" -> "gratitud"
+        "veränderung" -> "cambio"
+        "gelegenheit" -> "oportunidad"
+        "freiheit" -> "libertad"
+        "natur" -> "naturaleza"
+        
+        // Portugués -> Español
+        "motivação" -> "motivación"
+        "vida" -> "vida"  // mismo que español
+        "sonhos" -> "sueños"
+        "perseverança" -> "perseverancia"
+        "educação" -> "educación"
+        "criatividade" -> "creatividad"
+        "sucesso" -> "éxito"
+        "autenticidade" -> "autenticidad"
+        "felicidade" -> "felicidad"
+        "sabedoria" -> "sabiduría"
+        "confiança" -> "confianza"
+        "progresso" -> "progreso"
+        "excelência" -> "excelencia"
+        "ação" -> "acción"
+        "liderança" -> "liderazgo"
+        "negócios" -> "negocios"
+        "espiritualidade" -> "espiritualidad"
+        "amor" -> "amor"  // mismo que español
+        "família" -> "familia"
+        "amizade" -> "amistad"
+        "tempo" -> "tiempo"
+        "dinheiro" -> "dinero"
+        "saúde" -> "salud"
+        "paz" -> "paz"  // mismo que español
+        "esperança" -> "esperanza"
+        "gratidão" -> "gratitud"
+        "mudança" -> "cambio"
+        "oportunidade" -> "oportunidad"
+        "liberdade" -> "libertad"
+        "natureza" -> "naturaleza"
+        
+        // Italiano -> Español
+        "motivazione" -> "motivación"
+        "vita" -> "vida"
+        "sogni" -> "sueños"
+        "perseveranza" -> "perseverancia"
+        "educazione" -> "educación"
+        "creatività" -> "creatividad"
+        "successo" -> "éxito"
+        "autenticità" -> "autenticidad"
+        "felicità" -> "felicidad"
+        "saggezza" -> "sabiduría"
+        "fiducia" -> "confianza"
+        "progresso" -> "progreso"
+        "eccellenza" -> "excelencia"
+        "azione" -> "acción"
+        "leadership" -> "liderazgo"  // mismo que inglés
+        "affari" -> "negocios"
+        "spiritualità" -> "espiritualidad"
+        "amore" -> "amor"
+        "famiglia" -> "familia"
+        "amicizia" -> "amistad"
+        "tempo" -> "tiempo"
+        "denaro" -> "dinero"
+        "salute" -> "salud"
+        "pace" -> "paz"
+        "speranza" -> "esperanza"
+        "gratitudine" -> "gratitud"
+        "cambiamento" -> "cambio"
+        "opportunità" -> "oportunidad"
+        "libertà" -> "libertad"
+        "natura" -> "naturaleza"
+        
+        // Si no encuentra mapeo, devolver la categoría original
+        else -> category.lowercase().trim()
+    }
+}
+
+/**
+ * Obtiene el emoji correspondiente a una categoría (ahora con soporte multiidioma)
  */
 fun getCategoryEmoji(category: String): String {
-    return when (category.lowercase().trim()) {
+    // Primero mapear la categoría a español
+    val spanishCategory = mapCategoryToSpanish(category)
+    return when (spanishCategory) {
         "motivación" -> "🔥"
         "vida" -> "🌱"
         "sueños" -> "✨"
@@ -40,10 +223,12 @@ fun getCategoryEmoji(category: String): String {
 }
 
 /**
- * Obtiene el color primario asociado a una categoría
+ * Obtiene el color primario asociado a una categoría (ahora con soporte multiidioma)
  */
 fun getCategoryColor(category: String): androidx.compose.ui.graphics.Color {
-    return when (category.lowercase().trim()) {
+    // Primero mapear la categoría a español
+    val spanishCategory = mapCategoryToSpanish(category)
+    return when (spanishCategory) {
         "motivación" -> androidx.compose.ui.graphics.Color(0xFFFF6B35) // Naranja fuego
         "vida" -> androidx.compose.ui.graphics.Color(0xFF4CAF50) // Verde vida
         "sueños" -> androidx.compose.ui.graphics.Color(0xFF9C27B0) // Púrpura mágico
@@ -58,15 +243,33 @@ fun getCategoryColor(category: String): androidx.compose.ui.graphics.Color {
         "progreso" -> androidx.compose.ui.graphics.Color(0xFF8BC34A) // Verde progreso
         "excelencia" -> androidx.compose.ui.graphics.Color(0xFFFF9800) // Naranja excelencia
         "acción" -> androidx.compose.ui.graphics.Color(0xFFF44336) // Rojo acción
+        "liderazgo" -> androidx.compose.ui.graphics.Color(0xFF673AB7) // Púrpura liderazgo
+        "negocios" -> androidx.compose.ui.graphics.Color(0xFF37474F) // Gris negocios
+        "espiritualidad" -> androidx.compose.ui.graphics.Color(0xFF9C27B0) // Púrpura espiritual
+        "amor" -> androidx.compose.ui.graphics.Color(0xFFE91E63) // Rosa amor
+        "familia" -> androidx.compose.ui.graphics.Color(0xFF8BC34A) // Verde familia
+        "amistad" -> androidx.compose.ui.graphics.Color(0xFF03A9F4) // Azul amistad
+        "tiempo" -> androidx.compose.ui.graphics.Color(0xFF795548) // Marrón tiempo
+        "dinero" -> androidx.compose.ui.graphics.Color(0xFF4CAF50) // Verde dinero
+        "salud" -> androidx.compose.ui.graphics.Color(0xFF4CAF50) // Verde salud
+        "paz" -> androidx.compose.ui.graphics.Color(0xFF81C784) // Verde claro paz
+        "esperanza" -> androidx.compose.ui.graphics.Color(0xFFFFEB3B) // Amarillo esperanza
+        "gratitud" -> androidx.compose.ui.graphics.Color(0xFFFF9800) // Naranja gratitud
+        "cambio" -> androidx.compose.ui.graphics.Color(0xFF00BCD4) // Cian cambio
+        "oportunidad" -> androidx.compose.ui.graphics.Color(0xFFFFC107) // Dorado oportunidad
+        "libertad" -> androidx.compose.ui.graphics.Color(0xFF03A9F4) // Azul libertad
+        "naturaleza" -> androidx.compose.ui.graphics.Color(0xFF4CAF50) // Verde naturaleza
         else -> androidx.compose.ui.graphics.Color(0xFF9E9E9E) // Gris por defecto
     }
 }
 
 /**
- * Obtiene una descripción de la categoría
+ * Obtiene una descripción de la categoría (ahora con soporte multiidioma)
  */
 fun getCategoryDescription(category: String): String {
-    return when (category.lowercase().trim()) {
+    // Primero mapear la categoría a español
+    val spanishCategory = mapCategoryToSpanish(category)
+    return when (spanishCategory) {
         "motivación" -> "Citas que encienden tu pasión interior"
         "vida" -> "Reflexiones sobre el arte de vivir"
         "sueños" -> "Inspiración para alcanzar lo imposible"
@@ -95,7 +298,7 @@ fun getCategoryDescription(category: String): String {
         "gratitud" -> "Aprecia las bendiciones de la vida"
         "cambio" -> "Abraza las transformaciones"
         "oportunidad" -> "Reconoce las puertas que se abren"
-        "libertad" -> "Vive sin limitaciones autoimpuestas"
+        "libertad" -> "Vive sin limitaciones autoimpuestas" 
         "naturaleza" -> "Sabiduría de la madre tierra"
         else -> "Sabiduría para inspirar tu día"
     }
@@ -136,7 +339,7 @@ fun getPopularCategories(): List<String> {
 }
 
 /**
- * Verifica si una categoría existe
+ * Verifica si una categoría existe (ahora con soporte multiidioma)
  */
 fun isValidCategory(category: String): Boolean {
     val validCategories = listOf(
@@ -147,7 +350,9 @@ fun isValidCategory(category: String): Boolean {
         "tiempo", "dinero", "salud", "paz", "esperanza", "gratitud",
         "cambio", "oportunidad", "libertad", "naturaleza"
     )
-    return category.lowercase().trim() in validCategories
+    // Mapear la categoría a español y verificar si existe
+    val spanishCategory = mapCategoryToSpanish(category)
+    return spanishCategory in validCategories
 }
 
 /**
@@ -211,7 +416,7 @@ fun normalizeCategory(category: String): String {
 }
 
 /**
- * Obtiene el gradiente de colores para una categoría
+ * Obtiene el gradiente de colores para una categoría (ahora con soporte multiidioma)
  */
 fun getCategoryGradient(category: String): List<androidx.compose.ui.graphics.Color> {
     val primaryColor = getCategoryColor(category)

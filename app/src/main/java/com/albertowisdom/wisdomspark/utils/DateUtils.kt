@@ -1,13 +1,44 @@
 package com.albertowisdom.wisdomspark.utils
 
+import android.content.Context
 import java.text.SimpleDateFormat
 import java.util.*
 
 object DateUtils {
     
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    private val displayDateFormat = SimpleDateFormat("EEEE, d 'de' MMMM", Locale.forLanguageTag("es-ES"))
-    private val fullDisplayDateFormat = SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es-ES"))
+    
+    private fun getLocale(context: Context): Locale {
+        val prefs = context.getSharedPreferences("locale_prefs", Context.MODE_PRIVATE)
+        val languageCode = prefs.getString("app_language", Locale.getDefault().language) ?: Locale.getDefault().language
+        return Locale.forLanguageTag(languageCode)
+    }
+    
+    private fun getDisplayDateFormat(context: Context): SimpleDateFormat {
+        val locale = getLocale(context)
+        return when (locale.language) {
+            "es" -> SimpleDateFormat("EEEE, d 'de' MMMM", locale)
+            "en" -> SimpleDateFormat("EEEE, MMMM d", locale)
+            "fr" -> SimpleDateFormat("EEEE d MMMM", locale)
+            "de" -> SimpleDateFormat("EEEE, d. MMMM", locale)
+            "pt" -> SimpleDateFormat("EEEE, d 'de' MMMM", locale)
+            "it" -> SimpleDateFormat("EEEE, d MMMM", locale)
+            else -> SimpleDateFormat("EEEE, d MMMM", locale)
+        }
+    }
+    
+    private fun getFullDisplayDateFormat(context: Context): SimpleDateFormat {
+        val locale = getLocale(context)
+        return when (locale.language) {
+            "es" -> SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", locale)
+            "en" -> SimpleDateFormat("EEEE, MMMM d, yyyy", locale)
+            "fr" -> SimpleDateFormat("EEEE d MMMM yyyy", locale)
+            "de" -> SimpleDateFormat("EEEE, d. MMMM yyyy", locale)
+            "pt" -> SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", locale)
+            "it" -> SimpleDateFormat("EEEE, d MMMM yyyy", locale)
+            else -> SimpleDateFormat("EEEE, d MMMM yyyy", locale)
+        }
+    }
     
     /**
      * Obtiene la fecha actual en formato para base de datos (yyyy-MM-dd)
@@ -20,9 +51,11 @@ object DateUtils {
      * Obtiene la fecha actual formateada para mostrar al usuario
      * Ejemplo: "Lunes, 7 de Julio"
      */
-    fun getCurrentDateFormatted(): String {
-        return displayDateFormat.format(Date()).replaceFirstChar { 
-            if (it.isLowerCase()) it.titlecase(Locale.forLanguageTag("es-ES")) else it.toString() 
+    fun getCurrentDateFormatted(context: Context): String {
+        val displayFormat = getDisplayDateFormat(context)
+        val locale = getLocale(context)
+        return displayFormat.format(Date()).replaceFirstChar { 
+            if (it.isLowerCase()) it.titlecase(locale) else it.toString() 
         }
     }
     
@@ -30,21 +63,25 @@ object DateUtils {
      * Obtiene la fecha actual con año completo
      * Ejemplo: "Lunes, 7 de Julio de 2025"
      */
-    fun getCurrentDateFormattedFull(): String {
-        return fullDisplayDateFormat.format(Date()).replaceFirstChar { 
-            if (it.isLowerCase()) it.titlecase(Locale.forLanguageTag("es-ES")) else it.toString() 
+    fun getCurrentDateFormattedFull(context: Context): String {
+        val fullDisplayFormat = getFullDisplayDateFormat(context)
+        val locale = getLocale(context)
+        return fullDisplayFormat.format(Date()).replaceFirstChar { 
+            if (it.isLowerCase()) it.titlecase(locale) else it.toString() 
         }
     }
     
     /**
      * Convierte una fecha de string a formato de display
      */
-    fun formatDateForDisplay(dateString: String): String? {
+    fun formatDateForDisplay(context: Context, dateString: String): String? {
         return try {
             val date = dateFormat.parse(dateString)
+            val displayFormat = getDisplayDateFormat(context)
+            val locale = getLocale(context)
             date?.let { 
-                displayDateFormat.format(it).replaceFirstChar { char ->
-                    if (char.isLowerCase()) char.titlecase(Locale.forLanguageTag("es-ES")) else char.toString() 
+                displayFormat.format(it).replaceFirstChar { char ->
+                    if (char.isLowerCase()) char.titlecase(locale) else char.toString() 
                 }
             }
         } catch (e: Exception) {
@@ -72,13 +109,13 @@ object DateUtils {
     /**
      * Obtiene un saludo basado en la hora del día
      */
-    fun getGreeting(): String {
+    fun getGreeting(context: Context): String {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         return when (hour) {
-            in 5..11 -> "Buenos días"
-            in 12..17 -> "Buenas tardes"
-            in 18..22 -> "Buenas noches"
-            else -> "Buenas madrugadas"
+            in 5..11 -> context.getString(com.albertowisdom.wisdomspark.R.string.good_morning)
+            in 12..17 -> context.getString(com.albertowisdom.wisdomspark.R.string.good_afternoon)
+            in 18..22 -> context.getString(com.albertowisdom.wisdomspark.R.string.good_evening)
+            else -> context.getString(com.albertowisdom.wisdomspark.R.string.good_night)
         }
     }
     
@@ -102,16 +139,16 @@ object DateUtils {
     /**
      * Formatea una fecha relativa (hoy, ayer, hace X días)
      */
-    fun getRelativeDateString(dateString: String): String {
+    fun getRelativeDateString(context: Context, dateString: String): String {
         return when {
-            isToday(dateString) -> "Hoy"
-            isYesterday(dateString) -> "Ayer"
+            isToday(dateString) -> context.getString(com.albertowisdom.wisdomspark.R.string.today)
+            isYesterday(dateString) -> context.getString(com.albertowisdom.wisdomspark.R.string.yesterday)
             else -> {
                 val daysAgo = getDaysAgo(dateString)
                 when {
-                    daysAgo == null -> formatDateForDisplay(dateString) ?: dateString
-                    daysAgo <= 7 -> "Hace $daysAgo días"
-                    else -> formatDateForDisplay(dateString) ?: dateString
+                    daysAgo == null -> formatDateForDisplay(context, dateString) ?: dateString
+                    daysAgo <= 7 -> context.getString(com.albertowisdom.wisdomspark.R.string.days_ago, daysAgo)
+                    else -> formatDateForDisplay(context, dateString) ?: dateString
                 }
             }
         }
@@ -137,17 +174,17 @@ object DateUtils {
     /**
      * Obtiene una frase motivacional basada en el día de la semana
      */
-    fun getDayMotivation(): String {
+    fun getDayMotivation(context: Context): String {
         val dayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
         return when (dayOfWeek) {
-            Calendar.MONDAY -> "¡Nuevo comienzo, nuevas oportunidades!"
-            Calendar.TUESDAY -> "La constancia es la clave del éxito"
-            Calendar.WEDNESDAY -> "Mitad de semana, ¡sigue adelante!"
-            Calendar.THURSDAY -> "¡Casi llegamos al final!"
-            Calendar.FRIDAY -> "¡El esfuerzo de la semana da sus frutos!"
-            Calendar.SATURDAY -> "Tiempo para relajar y reflexionar"
-            Calendar.SUNDAY -> "Prepárate para una nueva semana increíble"
-            else -> "Cada día es una nueva oportunidad"
+            Calendar.MONDAY -> context.getString(com.albertowisdom.wisdomspark.R.string.monday_motivation)
+            Calendar.TUESDAY -> context.getString(com.albertowisdom.wisdomspark.R.string.tuesday_motivation)
+            Calendar.WEDNESDAY -> context.getString(com.albertowisdom.wisdomspark.R.string.wednesday_motivation)
+            Calendar.THURSDAY -> context.getString(com.albertowisdom.wisdomspark.R.string.thursday_motivation)
+            Calendar.FRIDAY -> context.getString(com.albertowisdom.wisdomspark.R.string.friday_motivation)
+            Calendar.SATURDAY -> context.getString(com.albertowisdom.wisdomspark.R.string.saturday_motivation)
+            Calendar.SUNDAY -> context.getString(com.albertowisdom.wisdomspark.R.string.sunday_motivation)
+            else -> context.getString(com.albertowisdom.wisdomspark.R.string.default_motivation)
         }
     }
 }

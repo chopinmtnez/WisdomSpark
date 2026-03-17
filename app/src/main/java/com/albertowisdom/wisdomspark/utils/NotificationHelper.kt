@@ -3,6 +3,7 @@ package com.albertowisdom.wisdomspark.utils
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.util.Log
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -26,9 +27,8 @@ class NotificationHelper @Inject constructor(
 ) {
     
     companion object {
+        private const val TAG = "NotificationHelper"
         const val CHANNEL_ID = "wisdom_daily_channel"
-        const val CHANNEL_NAME = "Citas Diarias"
-        const val CHANNEL_DESCRIPTION = "Notificaciones con tu dosis diaria de sabiduría"
         const val NOTIFICATION_ID = 1001
         
         private val MOTIVATIONAL_MESSAGES = listOf(
@@ -66,10 +66,10 @@ class NotificationHelper @Inject constructor(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                CHANNEL_NAME,
+                context.getString(R.string.notification_channel_name),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = CHANNEL_DESCRIPTION
+                description = context.getString(R.string.notification_channel_description)
                 enableVibration(true)
                 setShowBadge(true)
             }
@@ -129,7 +129,7 @@ class NotificationHelper @Inject constructor(
             notificationManager.notify(NOTIFICATION_ID, notification)
         } catch (e: SecurityException) {
             // Permiso denegado - manejar silenciosamente
-            println("Error al mostrar notificación: permisos denegados")
+            Log.e(TAG, "Error al mostrar notificacion: permisos denegados")
         }
     }
     
@@ -188,4 +188,60 @@ class NotificationHelper @Inject constructor(
     fun areNotificationsEnabledInSystem(): Boolean {
         return NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
+    
+    /**
+     * Verificar si deberíamos mostrar el rationale para solicitar permiso
+     */
+    fun shouldShowPermissionRationale(activity: android.app.Activity): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(
+                activity, 
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        } else {
+            false
+        }
+    }
+    
+    /**
+     * Obtener diagnóstico detallado de permisos
+     */
+    fun getPermissionDiagnostic(): String {
+        val diagnostic = StringBuilder()
+        diagnostic.appendLine("🔍 DIAGNÓSTICO DE PERMISOS DE NOTIFICACIÓN")
+        diagnostic.appendLine("====================================================")
+        
+        // Información de Android
+        diagnostic.appendLine("📱 Android API Level: ${Build.VERSION.SDK_INT}")
+        diagnostic.appendLine("🎯 Target SDK: ${if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) "Requires POST_NOTIFICATIONS" else "No permission required"}")
+        
+        // Estado de permisos
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = hasNotificationPermission()
+            diagnostic.appendLine("🔐 POST_NOTIFICATIONS: ${if (hasPermission) "✅ GRANTED" else "❌ DENIED"}")
+        } else {
+            diagnostic.appendLine("🔐 POST_NOTIFICATIONS: ✅ NOT REQUIRED (API < 33)")
+        }
+        
+        // Estado del sistema
+        val systemEnabled = areNotificationsEnabledInSystem()
+        diagnostic.appendLine("⚙️ System notifications: ${if (systemEnabled) "✅ ENABLED" else "❌ DISABLED"}")
+        
+        // Canal de notificación
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val systemNotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val channel = systemNotificationManager.getNotificationChannel(CHANNEL_ID)
+            if (channel != null) {
+                diagnostic.appendLine("📡 Notification channel: ✅ CREATED")
+                diagnostic.appendLine("    - Name: ${channel.name}")
+                diagnostic.appendLine("    - Importance: ${channel.importance}")
+                diagnostic.appendLine("    - Enabled: ${channel.importance != NotificationManager.IMPORTANCE_NONE}")
+            } else {
+                diagnostic.appendLine("📡 Notification channel: ❌ NOT FOUND")
+            }
+        }
+        
+        return diagnostic.toString()
+    }
+
 }

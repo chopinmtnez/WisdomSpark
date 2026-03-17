@@ -1,5 +1,6 @@
 package com.albertowisdom.wisdomspark.presentation.ui.components
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -43,6 +44,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.albertowisdom.wisdomspark.presentation.navigation.Screen
+import androidx.compose.ui.res.stringResource
+import com.albertowisdom.wisdomspark.R
+
+private const val TAG = "BottomNavigation"
 
 /**
  * Enhanced bottom navigation component with smooth animations and haptic feedback
@@ -58,15 +63,18 @@ fun EnhancedBottomNavigation(
     
     // Obtener el estado de las preferencias de feedback háptico
     val isHapticEnabled by (userPreferences?.isHapticFeedbackEnabled?.collectAsState(initial = true) ?: remember { mutableStateOf(true) })
+    
+    // Obtener los items de navegación localizados
+    val navigationItems = getNavigationItems()
 
     Surface(
         modifier = modifier.fillMaxWidth(),
         shadowElevation = 8.dp,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        color = MaterialTheme.colorScheme.surface
     ) {
         Box(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface)
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(vertical = 8.dp)
         ) {
@@ -81,7 +89,7 @@ fun EnhancedBottomNavigation(
                         isSelected = currentRoute == item.route,
                         onClick = {
                             if (currentRoute != item.route) {
-                                println("🔄 Navigating from '$currentRoute' to '${item.route}'")
+                                Log.d(TAG, "Navigating from '$currentRoute' to '${item.route}'")
                                 navController.navigate(item.route) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
@@ -90,7 +98,7 @@ fun EnhancedBottomNavigation(
                                     restoreState = true
                                 }
                             } else {
-                                println("🔄 Already on '${item.route}', no navigation needed")
+                                Log.d(TAG, "Already on '${item.route}', no navigation needed")
                             }
                         },
                         isHapticEnabled = isHapticEnabled
@@ -201,36 +209,34 @@ private data class BottomNavItem(
 )
 
 /**
- * List of navigation items
+ * Get navigation items with localized titles
  */
-private val navigationItems = listOf(
-    BottomNavItem(
-        route = Screen.Home.route,
-        title = "Inicio",
-        emoji = "🏠",
-        selectedEmoji = "🏠"
-    ),
-    BottomNavItem(
-        route = Screen.Categories.route,
-        title = "Categorías",
-        emoji = "📂",
-        selectedEmoji = "📁"
-    ),
-    BottomNavItem(
-        route = Screen.Favorites.route,
-        title = "Favoritos",
-        emoji = "💝",
-        selectedEmoji = "❤️"
-    ),
-    BottomNavItem(
-        route = Screen.Settings.route,
-        title = "Ajustes",
-        emoji = "⚙️",
-        selectedEmoji = "⚙️"
+@Composable
+private fun getNavigationItems(): List<BottomNavItem> {
+    return listOf(
+        BottomNavItem(
+            route = Screen.Home.route,
+            title = stringResource(R.string.today_quote),
+            emoji = "🏠",
+            selectedEmoji = "🏠"
+        ),
+        BottomNavItem(
+            route = Screen.Categories.route,
+            title = stringResource(R.string.categories),
+            emoji = "📂",
+            selectedEmoji = "📁"
+        ),
+        BottomNavItem(
+            route = Screen.Favorites.route,
+            title = stringResource(R.string.favorites),
+            emoji = "💝",
+            selectedEmoji = "❤️"
+        ),
+        BottomNavItem(
+            route = Screen.Settings.route,
+            title = stringResource(R.string.settings),
+            emoji = "⚙️",
+            selectedEmoji = "⚙️"
+        )
     )
-).also { items ->
-    println("📱 Navigation items configured:")
-    items.forEach { item ->
-        println("  - ${item.title}: ${item.route}")
-    }
 }

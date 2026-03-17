@@ -115,8 +115,30 @@ Thumbs.db
 !README.md
 !CONTRIBUTING.md
 !SECURITY.md
+!CLAUDE.md
 !LICENSE
 
 # Temporary and development files
 integrate_expanded_quotes.bat
 verify_*.bat
+*.bat
+
+# Claude Code sessions
+.claude/
+
+# Kotlin compiler sessions
+.kotlin/sessions/
+
+# Release builds (signed APK/AAB)
+app/release/
+
+# Debug screenshots and temporary images
+*.png
+screenshots/
+
+# Windows artifacts
+nul
+
+# IDE-specific (additional)
+.idea/appInsightsSettings.xml
+.idea/deploymentTargetSelector.xml

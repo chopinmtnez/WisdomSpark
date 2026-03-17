@@ -6,6 +6,12 @@ import android.util.Log
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.albertowisdom.wisdomspark.BuildConfig
+import com.albertowisdom.wisdomspark.premium.billing.BillingManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,27 +20,24 @@ import javax.inject.Singleton
  * Maneja banners, intersticiales y lógica de monetización
  */
 @Singleton
-class AdMobManager @Inject constructor() {
+class AdMobManager @Inject constructor(
+    private val billingManager: BillingManager
+) {
 
     companion object {
-        // Test Ad Unit IDs - Reemplazar con IDs reales en producción
-        //const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
-        //const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
-        const val BANNER_AD_UNIT_ID = "ca-app-pub-7402516505141988/8292203738"
-        const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-7402516505141988/9374185266"
+        val BANNER_AD_UNIT_ID: String get() = BuildConfig.ADMOB_BANNER_ID
+        val INTERSTITIAL_AD_UNIT_ID: String get() = BuildConfig.ADMOB_INTERSTITIAL_ID
 
-        
-        // Configuración de frecuencia
-        const val INTERSTITIAL_FREQUENCY = 3 // Mostrar cada 3 interacciones
+        const val INTERSTITIAL_FREQUENCY = 3
     }
 
     private var isInitialized = false
     private var interstitialAd: InterstitialAd? = null
     private var interactionCount = 0
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
-    // Estado premium (para testing o compras in-app)
-    var isPremiumUser = false
-        private set
+    // Estado premium se obtiene del BillingManager
+    private var isPremiumUser = false
 
     /**
      * Inicializar AdMob SDK
@@ -42,13 +45,32 @@ class AdMobManager @Inject constructor() {
     fun initialize(context: Context) {
         if (isInitialized) return
 
+        // Observar estado Premium (incluyendo modo testing)
+        scope.launch {
+            billingManager.subscriptionStatus.collect { status ->
+                val newPremiumStatus = billingManager.isPremium() // Usar método que incluye testing
+                if (isPremiumUser != newPremiumStatus) {
+                    isPremiumUser = newPremiumStatus
+                    Log.d("AdMob", "Estado Premium actualizado: $isPremiumUser")
+                    
+                    // Si cambia de no-premium a premium, cancelar anuncios
+                    if (isPremiumUser) {
+                        interstitialAd = null
+                        Log.d("AdMob", "🚫 Anuncios deshabilitados - Usuario Premium activo")
+                    }
+                }
+            }
+        }
+
         try {
             MobileAds.initialize(context) { initializationStatus ->
                 Log.d("AdMob", "✅ AdMob inicializado: ${initializationStatus.adapterStatusMap}")
                 isInitialized = true
                 
-                // Precargar primer interstitial
-                loadInterstitialAd(context)
+                // Solo precargar si no es Premium
+                if (!isPremiumUser) {
+                    loadInterstitialAd(context)
+                }
             }
         } catch (e: Exception) {
             Log.e("AdMob", "❌ Error inicializando AdMob: ${e.message}")
@@ -140,20 +162,9 @@ class AdMobManager @Inject constructor() {
     }
 
     /**
-     * Activar modo premium
+     * Verificar si el usuario es Premium
      */
-    fun activatePremium() {
-        isPremiumUser = true
-        Log.d("AdMob", "💎 Modo premium activado - Anuncios deshabilitados")
-    }
-
-    /**
-     * Desactivar modo premium (para testing)
-     */
-    fun deactivatePremium() {
-        isPremiumUser = false
-        Log.d("AdMob", "📱 Modo premium desactivado - Anuncios habilitados")
-    }
+    fun isPremium(): Boolean = isPremiumUser
 
     /**
      * Reset contador de interacciones

@@ -1,6 +1,7 @@
 package com.albertowisdom.wisdomspark.di
 
 import com.albertowisdom.wisdomspark.ads.AdMobManager
+import com.albertowisdom.wisdomspark.premium.billing.BillingManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,7 +17,7 @@ object AdMobModule {
 
     @Provides
     @Singleton
-    fun provideAdMobManager(): AdMobManager {
-        return AdMobManager()
+    fun provideAdMobManager(billingManager: BillingManager): AdMobManager {
+        return AdMobManager(billingManager)
     }
 }

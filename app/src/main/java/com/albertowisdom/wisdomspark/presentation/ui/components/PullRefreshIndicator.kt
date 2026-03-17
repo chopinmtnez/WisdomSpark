@@ -31,18 +31,8 @@ fun WisdomPullRefreshIndicator(
     size: Dp = 56.dp,
     strokeWidth: Dp = 4.dp
 ) {
-    val transition = rememberInfiniteTransition(label = "refresh")
-    
-    // Animación de rotación durante loading
-    val rotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
+    // Animación deshabilitada temporalmente para evitar CompositionEngine errors
+    val rotation = 0f
     
     // Animación de escala al aparecer
     val scale by animateFloatAsState(
@@ -208,27 +198,9 @@ private fun DrawScope.drawPullIndicator(
 private fun SparkleEffect(
     modifier: Modifier = Modifier
 ) {
-    val transition = rememberInfiniteTransition(label = "sparkle")
-    
-    val sparkleRotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sparkleRotation"
-    )
-    
-    val sparkleAlpha by transition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "sparkleAlpha"
-    )
+    // Animaciones deshabilitadas temporalmente para evitar CompositionEngine errors
+    val sparkleRotation = 0f
+    val sparkleAlpha = 0.5f
     
     Canvas(
         modifier = modifier

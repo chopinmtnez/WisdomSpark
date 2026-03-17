@@ -438,23 +438,8 @@ object ShareUtils {
     }
     
     private fun getCategoryEmojiForImage(category: String): String {
-        return when (category.lowercase()) {
-            "motivación" -> "🔥"
-            "vida" -> "🌱"
-            "sueños" -> "✨"
-            "perseverancia" -> "💪"
-            "educación" -> "📚"
-            "creatividad" -> "🎨"
-            "éxito" -> "🏆"
-            "autenticidad" -> "🦋"
-            "felicidad" -> "😊"
-            "sabiduría" -> "🧠"
-            "confianza" -> "💎"
-            "progreso" -> "📈"
-            "excelencia" -> "⭐"
-            "acción" -> "⚡"
-            else -> "💫"
-        }
+        // Usar la función de mapeo universal de CategoryUtils
+        return getCategoryEmoji(category)
     }
     
     private fun saveBitmapToCache(
@@ -622,6 +607,7 @@ fun testShare(context: Context) {
         text = "Esta es una cita de prueba para verificar que la funcionalidad de compartir funciona correctamente.",
         author = "Autor de Prueba",
         category = "Motivación",
+        language = "es",
         isFavorite = false
     )
     ShareUtils.shareQuoteSimple(context, testQuote)

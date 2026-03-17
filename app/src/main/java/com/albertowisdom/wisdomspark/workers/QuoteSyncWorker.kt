@@ -25,14 +25,16 @@ class QuoteSyncWorker @AssistedInject constructor(
         private const val TAG = "QuoteSyncWorker"
     }
     
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        try {
+    override suspend fun doWork(): Result {
+        return try {
             Log.d(TAG, "🔄 Iniciando sincronización automática")
             
-            // Intentar sincronizar con forzar actualización
-            val syncResult = quoteRepository.forceSyncWithGoogleSheets()
+            // Usar initializeQuotes con forceSync=true para sincronización periódica
+            withContext(Dispatchers.IO) {
+                quoteRepository.initializeQuotes(forceSync = true)
+            }
             
-            Log.d(TAG, "✅ Sincronización automática completada: $syncResult")
+            Log.d(TAG, "✅ Sincronización automática completada")
             Result.success()
             
         } catch (e: Exception) {

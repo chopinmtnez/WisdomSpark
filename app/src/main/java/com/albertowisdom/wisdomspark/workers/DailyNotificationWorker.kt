@@ -1,6 +1,7 @@
 package com.albertowisdom.wisdomspark.workers
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -25,64 +26,92 @@ class DailyNotificationWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
+        private const val TAG = "DailyNotificationWorker"
         const val WORKER_NAME = "daily_notification_worker"
         const val WORKER_TAG = "wisdom_daily_notifications"
     }
 
     override suspend fun doWork(): Result {
+        val startTime = System.currentTimeMillis()
+        Log.d(TAG, "DailyNotificationWorker iniciado - ${java.util.Date()}")
+        
         return try {
             // Verificar si las notificaciones están habilitadas
             val notificationsEnabled = userPreferences.areNotificationsEnabled.first()
+            Log.d(TAG, "Notificaciones habilitadas en preferencias: $notificationsEnabled")
             
             if (!notificationsEnabled) {
-                println("📵 Notificaciones deshabilitadas por el usuario")
+                Log.d(TAG, "Notificaciones deshabilitadas por el usuario - Worker terminado")
                 return Result.success()
             }
             
             // Verificar permisos del sistema
-            if (!notificationHelper.hasNotificationPermission()) {
-                println("🚫 Sin permisos de notificación")
+            val hasPermission = notificationHelper.hasNotificationPermission()
+            val systemEnabled = notificationHelper.areNotificationsEnabledInSystem()
+            Log.d(TAG, "Permiso POST_NOTIFICATIONS: $hasPermission")
+            Log.d(TAG, "Notificaciones del sistema habilitadas: $systemEnabled")
+            
+            if (!hasPermission) {
+                Log.d(TAG, "Sin permisos de notificacion - Worker terminado")
+                return Result.success()
+            }
+            
+            if (!systemEnabled) {
+                Log.d(TAG, "Notificaciones deshabilitadas en configuracion del sistema - Worker terminado")
                 return Result.success()
             }
             
             // Verificar si es un día válido para notificar
             if (!shouldSendNotificationToday()) {
-                println("📅 Hoy no se envían notificaciones")
+                Log.d(TAG, "Hoy no se envian notificaciones - Worker terminado")
                 return Result.success()
             }
             
             // Intentar obtener la cita del día
+            Log.d(TAG, "Obteniendo cita del dia...")
             val todayQuote = try {
-                quoteRepository.getOrCreateTodayQuote()
+                val language = userPreferences.appLanguage.first()
+                Log.d(TAG, "Idioma seleccionado: $language")
+                quoteRepository.getOrCreateTodayQuote(language)
             } catch (e: Exception) {
-                println("⚠️ Error al obtener cita del día: ${e.message}")
+                Log.e(TAG, "Error al obtener cita del dia: ${e.message}")
+                e.printStackTrace()
                 null
             }
             
             // Enviar notificación
             if (todayQuote != null) {
-                println("📱 Enviando notificación con cita: ${todayQuote.text.take(30)}...")
+                Log.d(TAG, "Enviando notificacion con cita: '${todayQuote.text.take(50)}...' - ${todayQuote.author}")
                 notificationHelper.showDailyQuoteNotification(todayQuote)
+                Log.d(TAG, "Notificacion enviada exitosamente")
             } else {
-                println("📱 Enviando notificación simple")
+                Log.d(TAG, "Enviando notificacion simple (sin cita)")
                 notificationHelper.showSimpleDailyNotification()
+                Log.d(TAG, "Notificacion simple enviada")
             }
+            
+            val executionTime = System.currentTimeMillis() - startTime
+            Log.d(TAG, "Worker completado en ${executionTime}ms")
             
             Result.success()
             
         } catch (e: Exception) {
-            println("❌ Error en DailyNotificationWorker: ${e.message}")
+            Log.e(TAG, "Error critico en DailyNotificationWorker: ${e.message}")
             e.printStackTrace()
             
             // En caso de error, intentar enviar notificación simple
             try {
                 if (notificationHelper.hasNotificationPermission()) {
+                    Log.d(TAG, "Intentando enviar notificacion de fallback...")
                     notificationHelper.showSimpleDailyNotification()
+                    Log.d(TAG, "Notificacion de fallback enviada")
                 }
             } catch (fallbackError: Exception) {
-                println("❌ Error en fallback de notificación: ${fallbackError.message}")
+                Log.e(TAG, "Error en fallback de notificacion: ${fallbackError.message}")
+                fallbackError.printStackTrace()
             }
             
+            Log.d(TAG, "Worker programado para retry")
             Result.retry()
         }
     }

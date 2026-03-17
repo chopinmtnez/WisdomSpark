@@ -105,12 +105,22 @@ fun WisdomSparkTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            
             @Suppress("DEPRECATION")
             window.statusBarColor = colorScheme.background.toArgb()
             @Suppress("DEPRECATION")
-            window.navigationBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
+            window.navigationBarColor = colorScheme.surface.toArgb()
+            
+            // Configurar la apariencia de las barras del sistema
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
+            
+            // Asegurar que las barras de navegación gestual también respeten el tema
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                @Suppress("DEPRECATION")
+                window.isNavigationBarContrastEnforced = false
+            }
         }
     }
 

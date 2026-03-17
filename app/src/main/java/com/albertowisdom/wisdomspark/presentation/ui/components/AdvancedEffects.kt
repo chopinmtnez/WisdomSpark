@@ -73,23 +73,8 @@ fun ParallaxCard(
 ) {
     val density = LocalDensity.current
     
-    val parallaxOffset by remember {
-        derivedStateOf {
-            val itemInfo = listState.layoutInfo.visibleItemsInfo
-                .find { it.index == index }
-            
-            if (itemInfo != null) {
-                val scrollOffset = itemInfo.offset.toFloat()
-                val itemHeight = itemInfo.size.toFloat()
-                val viewportCenter = listState.layoutInfo.viewportSize.height / 2f
-                
-                ((scrollOffset - viewportCenter + itemHeight / 2f) * parallaxFactor)
-                    .coerceIn(-itemHeight / 2f, itemHeight / 2f)
-            } else {
-                0f
-            }
-        }
-    }
+    // Simplificado para evitar problemas de CompositionEngine
+    val parallaxOffset = 0f
 
     Box(
         modifier = modifier.offset(y = with(density) { parallaxOffset.toDp() })
@@ -192,31 +177,11 @@ fun MorphingGradient(
     ),
     cycleDurationMs: Int = 5000
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "morphing")
-    val progress = infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = colorSets.size.toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(cycleDurationMs * colorSets.size, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "progress"
-    )
+    // Animación deshabilitada temporalmente para evitar CompositionEngine errors
+    val progress = remember { mutableFloatStateOf(0f) }
 
-    val currentColors by remember {
-        derivedStateOf {
-            val index = progress.value.toInt() % colorSets.size
-            val nextIndex = (index + 1) % colorSets.size
-            val fraction = progress.value - progress.value.toInt()
-
-            val current = colorSets[index]
-            val next = colorSets[nextIndex]
-
-            current.zip(next) { currentColor, nextColor ->
-                lerp(currentColor, nextColor, fraction)
-            }
-        }
-    }
+    // Simplificado para evitar problemas de CompositionEngine
+    val currentColors = colorSets.firstOrNull() ?: listOf(Color.Blue)
 
     Canvas(modifier = modifier.fillMaxSize()) {
         drawRect(

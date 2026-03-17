@@ -22,7 +22,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.albertowisdom.wisdomspark.R
 import com.albertowisdom.wisdomspark.ads.AdMobManager
 import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
 import com.albertowisdom.wisdomspark.presentation.ui.screens.home.HomeScreen
@@ -48,6 +50,14 @@ fun EnhancedHomeScreen(
     // Estado del modo swipeable
     val isSwipeableMode by userPreferences.isSwipeableModeEnabled.collectAsState(initial = false)
     val isHapticEnabled by userPreferences.isHapticFeedbackEnabled.collectAsState(initial = true)
+
+    // Show indicator briefly on mode change, then auto-hide
+    var showModeIndicator by remember { mutableStateOf(true) }
+    LaunchedEffect(isSwipeableMode) {
+        showModeIndicator = true
+        kotlinx.coroutines.delay(2000)
+        showModeIndicator = false
+    }
     
     // Animación de transición entre modos
     val transition = updateTransition(targetState = isSwipeableMode, label = "modeTransition")
@@ -64,7 +74,7 @@ fun EnhancedHomeScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = getWisdomGradientColors().map { it.copy(alpha = backgroundAlpha) }
+                    colors = getThemedGradientColors().map { it.copy(alpha = backgroundAlpha) }
                 )
             )
     ) {
@@ -104,7 +114,8 @@ fun EnhancedHomeScreen(
                 HomeScreen(
                     adMobManager = adMobManager,
                     viewModel = viewModel,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    userPreferences = userPreferences
                 )
             }
         }
@@ -125,9 +136,10 @@ fun EnhancedHomeScreen(
                 .padding(top = 80.dp, end = 16.dp)
         )
         
-        // Indicador de modo actual
+        // Indicador de modo actual (visible briefly on mode change)
         ModeIndicator(
             isSwipeableMode = isSwipeableMode,
+            visible = showModeIndicator,
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(top = 80.dp, start = 16.dp)
@@ -143,13 +155,13 @@ private fun ModeToggleButton(
 ) {
     // Animaciones para el toggle
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSwipeableMode) WisdomGold else Color.White,
+        targetValue = if (isSwipeableMode) WisdomGold else MaterialTheme.colorScheme.surface,
         animationSpec = tween(300),
         label = "backgroundColor"
     )
     
     val contentColor by animateColorAsState(
-        targetValue = if (isSwipeableMode) Color.White else WisdomCharcoal,
+        targetValue = if (isSwipeableMode) Color.White else MaterialTheme.colorScheme.onSurface,
         animationSpec = tween(300),
         label = "contentColor"
     )
@@ -177,7 +189,7 @@ private fun ModeToggleButton(
         ) {
             Icon(
                 imageVector = if (isSwipeableMode) Icons.AutoMirrored.Filled.ViewList else Icons.Filled.SwapHoriz,
-                contentDescription = if (isSwipeableMode) "Modo Lista" else "Modo Swipe",
+                contentDescription = if (isSwipeableMode) stringResource(R.string.content_description_mode_list) else stringResource(R.string.swipe_mode),
                 tint = contentColor,
                 modifier = Modifier
                     .size(24.dp)
@@ -192,19 +204,21 @@ private fun ModeToggleButton(
 @Composable
 private fun ModeIndicator(
     isSwipeableMode: Boolean,
+    visible: Boolean,
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
-        visible = true,
+        visible = visible,
         enter = slideInHorizontally(
             initialOffsetX = { -it },
             animationSpec = tween(600, delayMillis = 300)
         ) + fadeIn(animationSpec = tween(600, delayMillis = 300)),
+        exit = fadeOut(animationSpec = tween(400)),
         modifier = modifier
     ) {
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = Color.White.copy(alpha = 0.9f),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
             shadowElevation = 4.dp
         ) {
             Row(
@@ -222,11 +236,11 @@ private fun ModeIndicator(
                 )
                 
                 Text(
-                    text = if (isSwipeableMode) "Swipe" else "Clásico",
+                    text = if (isSwipeableMode) stringResource(R.string.swipe_mode) else stringResource(R.string.classic_mode),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
-                    color = WisdomCharcoal
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }

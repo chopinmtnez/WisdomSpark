@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,12 +21,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.albertowisdom.wisdomspark.R
 import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
+import com.albertowisdom.wisdomspark.utils.getCategoryEmoji
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.albertowisdom.wisdomspark.data.models.Quote
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
 import com.albertowisdom.wisdomspark.utils.ShareUtils
@@ -47,45 +49,60 @@ fun QuoteCard(
     // Obtener el estado de las preferencias de feedback háptico
     val isHapticEnabled by (userPreferences?.isHapticFeedbackEnabled?.collectAsState(initial = true) ?: remember { mutableStateOf(true) })
     
-    // Estados de animación
-    var isPressed by remember { mutableStateOf(false) }
+    // Estados de animación - memoizados para evitar recreación
+    var isPressed by remember(quote.id) { mutableStateOf(false) }
     
-    // Animaciones
+    // Animaciones - con remember para evitar recreación innecesaria
     val cardScale by animateFloatAsState(
         targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
+        animationSpec = remember { 
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            ) 
+        },
         label = "cardScale"
     )
     
     val elevationAnimation by animateFloatAsState(
         targetValue = if (isPressed) 8f else 12f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
+        animationSpec = remember { 
+            spring(dampingRatio = Spring.DampingRatioLowBouncy) 
+        },
         label = "elevation"
     )
 
-    // Gradientes dinámicos que respetan el tema
+    // Gradientes memoizados para evitar recreación en cada composición
     val gradientColors = getThemedGradientColors()
-    val cardGradient = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-            gradientColors[0].copy(alpha = 0.8f),
-            gradientColors[1].copy(alpha = 0.6f)
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val cardGradient = remember(gradientColors, surfaceColor) {
+        Brush.linearGradient(
+            colors = listOf(
+                surfaceColor.copy(alpha = 0.95f),
+                gradientColors[0].copy(alpha = 0.8f),
+                gradientColors[1].copy(alpha = 0.6f)
+            )
         )
-    )
+    }
     
-    val borderGradient = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-            MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val borderGradient = remember(primaryColor, surfaceColor) {
+        Brush.linearGradient(
+            colors = listOf(
+                primaryColor.copy(alpha = 0.6f),
+                surfaceColor.copy(alpha = 0.4f),
+                primaryColor.copy(alpha = 0.3f)
+            )
         )
-    )
+    }
 
-    // Emoji dinámico por categoría
-    val categoryEmoji = getCategoryEmoji(quote.category)
+    // Emoji memoizado por categoría para evitar cálculos repetidos
+    val categoryEmoji = remember(quote.category) { getCategoryEmoji(quote.category) }
+
+    // Strings de accesibilidad extraídos fuera del bloque semantics (no es @Composable)
+    val quoteContentDescription = stringResource(R.string.quote_description, quote.author, quote.text)
+    val addToFavoritesLabel = stringResource(R.string.add_to_favorites)
+    val shareQuoteLabel = stringResource(R.string.share_quote)
 
     Card(
         modifier = modifier
@@ -93,8 +110,24 @@ fun QuoteCard(
             .scale(cardScale)
             .clip(RoundedCornerShape(24.dp))
             .semantics {
-                contentDescription = "Cita de ${quote.author}: ${quote.text}"
+                contentDescription = quoteContentDescription
                 role = Role.Button
+                testTag = "quote_card"
+                // Acciones personalizadas para screen readers
+                customActions = listOf(
+                    CustomAccessibilityAction(
+                        label = addToFavoritesLabel
+                    ) {
+                        onFavoriteClick()
+                        true
+                    },
+                    CustomAccessibilityAction(
+                        label = shareQuoteLabel
+                    ) {
+                        onShareClick?.invoke()
+                        true
+                    }
+                )
             },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
@@ -166,7 +199,11 @@ fun QuoteCard(
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                         lineHeight = 32.sp,
-                        fontWeight = FontWeight.Normal
+                        fontWeight = FontWeight.Normal,
+                        modifier = Modifier.semantics {
+                            heading()
+                            testTag = "quote_text"
+                        }
                     )
                 }
 
@@ -212,7 +249,7 @@ fun QuoteCard(
                             onFavoriteClick()
                         },
                         icon = if (quote.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = if (quote.isFavorite) "Quitar de favoritos" else "Agregar a favoritos",
+                        contentDescription = if (quote.isFavorite) stringResource(R.string.remove_from_favorites) else stringResource(R.string.add_to_favorites),
                         tint = if (quote.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
@@ -226,7 +263,7 @@ fun QuoteCard(
                                 onShareClick()
                             },
                             icon = Icons.Default.Share,
-                            contentDescription = "Compartir cita",
+                            contentDescription = stringResource(R.string.share_quote),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
@@ -239,7 +276,7 @@ fun QuoteCard(
                                 ShareUtils.shareQuote(context, quote)
                             },
                             icon = Icons.Default.Share,
-                            contentDescription = "Compartir cita",
+                            contentDescription = stringResource(R.string.share_quote),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -257,12 +294,15 @@ private fun ActionButton(
     tint: Color,
     modifier: Modifier = Modifier
 ) {
-    // Estado local del botón
-    var buttonPressed by remember { mutableStateOf(false) }
+    // Estado local del botón - memoizado por identificador único 
+    var buttonPressed by remember(icon, contentDescription) { mutableStateOf(false) }
     
+    // Animaciones memoizadas para mejorar rendimiento
     val buttonScale by animateFloatAsState(
         targetValue = if (buttonPressed) 0.9f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        animationSpec = remember { 
+            spring(dampingRatio = Spring.DampingRatioMediumBouncy) 
+        },
         label = "buttonScale"
     )
     
@@ -271,7 +311,7 @@ private fun ActionButton(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) 
         else 
             MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-        animationSpec = tween(150),
+        animationSpec = remember { tween(150) },
         label = "surfaceColor"
     )
 
@@ -279,6 +319,8 @@ private fun ActionButton(
         onClick = {
             buttonPressed = true
             onClick()
+            // Reset inmediato para evitar LaunchedEffect
+            buttonPressed = false
         },
         modifier = modifier
             .size(56.dp)
@@ -307,32 +349,6 @@ private fun ActionButton(
         }
     }
     
-    // Reset del estado después del click
-    LaunchedEffect(buttonPressed) {
-        if (buttonPressed) {
-            delay(150)
-            buttonPressed = false
-        }
-    }
+    // El reset se maneja directamente en el onClick para mejor rendimiento
 }
 
-// Función para obtener emoji por categoría
-private fun getCategoryEmoji(category: String): String {
-    return when (category.lowercase()) {
-        "motivación" -> "🔥"
-        "vida" -> "🌱"
-        "sueños" -> "✨"
-        "perseverancia" -> "💪"
-        "educación" -> "📚"
-        "creatividad" -> "🎨"
-        "éxito" -> "🏆"
-        "autenticidad" -> "💎"
-        "felicidad" -> "😊"
-        "sabiduría" -> "🦉"
-        "confianza" -> "🌟"
-        "progreso" -> "📈"
-        "excelencia" -> "👑"
-        "acción" -> "⚡"
-        else -> "💫"
-    }
-}

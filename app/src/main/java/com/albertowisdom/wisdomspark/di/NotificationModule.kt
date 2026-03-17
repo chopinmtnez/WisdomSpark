@@ -1,6 +1,7 @@
 package com.albertowisdom.wisdomspark.di
 
 import android.content.Context
+import androidx.work.WorkManager
 import com.albertowisdom.wisdomspark.utils.NotificationHelper
 import com.albertowisdom.wisdomspark.utils.NotificationScheduler
 import com.albertowisdom.wisdomspark.utils.NotificationService
@@ -25,9 +26,17 @@ object NotificationModule {
     
     @Provides
     @Singleton
-    fun provideNotificationScheduler(
+    fun provideWorkManager(
         @ApplicationContext context: Context
+    ): WorkManager {
+        return WorkManager.getInstance(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideNotificationScheduler(
+        workManager: WorkManager
     ): NotificationScheduler {
-        return NotificationScheduler(context)
+        return NotificationScheduler(workManager)
     }
 }

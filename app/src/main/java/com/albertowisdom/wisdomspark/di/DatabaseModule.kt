@@ -25,6 +25,11 @@ object DatabaseModule {
             WisdomSparkDatabase::class.java,
             WisdomSparkDatabase.DATABASE_NAME
         )
+        .addMigrations(
+            WisdomSparkDatabase.MIGRATION_1_2,
+            WisdomSparkDatabase.MIGRATION_2_3,
+            WisdomSparkDatabase.MIGRATION_3_4
+        )
         .fallbackToDestructiveMigration()
         .build()
     }
@@ -33,4 +38,5 @@ object DatabaseModule {
     fun provideQuoteDao(database: WisdomSparkDatabase): QuoteDao {
         return database.quoteDao()
     }
+    
 }

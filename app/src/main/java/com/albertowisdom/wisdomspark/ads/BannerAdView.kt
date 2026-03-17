@@ -1,10 +1,13 @@
 package com.albertowisdom.wisdomspark.ads
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -13,12 +16,14 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.albertowisdom.wisdomspark.presentation.ui.theme.WisdomBeige
 import com.albertowisdom.wisdomspark.presentation.ui.theme.WisdomChampagne
+import com.albertowisdom.wisdomspark.premium.ui.PremiumViewModel
 
 /**
  * Banner Ad Composable integrado con el diseño premium de WisdomSpark
@@ -28,8 +33,16 @@ fun BannerAdView(
     adUnitId: String = AdMobManager.BANNER_AD_UNIT_ID,
     onAdLoaded: () -> Unit = {},
     onAdFailedToLoad: (LoadAdError) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    premiumViewModel: PremiumViewModel = hiltViewModel()
 ) {
+    val premiumUiState by premiumViewModel.uiState.collectAsState()
+    
+    // Si el usuario es Premium, no mostrar el banner
+    if (premiumUiState.isPremium) {
+        return
+    }
+    
     val configuration = LocalConfiguration.current
     
     // Calcular tamaño adaptativo
@@ -52,13 +65,13 @@ fun BannerAdView(
                 AdView(context).apply {
                     // Configurar tamaño adaptativo
                     setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
-                        context, 
+                        context,
                         screenWidthDp - 16 // Restar padding
                     ))
-                    
+
                     this.adUnitId = adUnitId
                     setBackgroundColor(WisdomChampagne.copy(alpha = 0.1f).toArgb())
-                    
+
                     // Configurar listeners
                     adListener = object : com.google.android.gms.ads.AdListener() {
                         override fun onAdLoaded() {
@@ -87,10 +100,14 @@ fun BannerAdView(
                             super.onAdOpened()
                         }
                     }
-                    
+
                     // Cargar anuncio
                     loadAd(AdRequest.Builder().build())
                 }
+            },
+            onRelease = { adView ->
+                Log.d("BannerAdView", "Destroying AdView on release")
+                adView.destroy()
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -127,13 +144,13 @@ fun PremiumBannerAdView(
             factory = { context ->
                 AdView(context).apply {
                     setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
-                        context, 
+                        context,
                         screenWidthDp - 24
                     ))
-                    
+
                     this.adUnitId = adUnitId
                     setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                    
+
                     adListener = object : com.google.android.gms.ads.AdListener() {
                         override fun onAdLoaded() {
                             super.onAdLoaded()
@@ -145,9 +162,13 @@ fun PremiumBannerAdView(
                             onAdFailedToLoad(error)
                         }
                     }
-                    
+
                     loadAd(AdRequest.Builder().build())
                 }
+            },
+            onRelease = { adView ->
+                Log.d("PremiumBannerAdView", "Destroying AdView on release")
+                adView.destroy()
             },
             modifier = Modifier
                 .fillMaxWidth()

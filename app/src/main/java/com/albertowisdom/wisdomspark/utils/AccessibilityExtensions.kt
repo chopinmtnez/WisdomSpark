@@ -2,6 +2,7 @@
 
 package com.albertowisdom.wisdomspark.utils
 
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.selectableGroup
@@ -14,6 +15,7 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import com.albertowisdom.wisdomspark.R
 
 /**
  * Extensiones de accesibilidad para WisdomSpark
@@ -184,22 +186,25 @@ fun Modifier.wisdomLiveRegionSemantics(
 }
 
 /**
- * Agrega descripción contextual para citas
+ * Agrega descripción contextual para citas (localizada)
+ * Requiere Context para resolver strings localizados fuera de contexto @Composable
  */
 fun Modifier.wisdomQuoteSemantics(
+    context: Context,
     text: String,
     author: String,
     category: String,
     isFavorite: Boolean
 ): Modifier = this.semantics {
     contentDescription = buildString {
-        append("Cita de $category. ")
-        append("\"$text\" ")
-        append("Por $author. ")
+        append(context.getString(R.string.accessibility_quote_of_category, category))
+        append(" \"$text\" ")
+        append(context.getString(R.string.accessibility_by_author, author))
+        append(" ")
         if (isFavorite) {
-            append("Marcada como favorita.")
+            append(context.getString(R.string.accessibility_favorited))
         } else {
-            append("No está en favoritos.")
+            append(context.getString(R.string.accessibility_not_favorited))
         }
     }
 }

@@ -1,17 +1,25 @@
 package com.albertowisdom.wisdomspark.presentation.ui.screens.settings
 
+import android.Manifest
+import android.util.Log
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,10 +32,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.albertowisdom.wisdomspark.utils.HapticManager
 import androidx.compose.ui.text.font.FontWeight
+import android.app.Activity
+import com.albertowisdom.wisdomspark.utils.LocaleHelper
+import com.albertowisdom.wisdomspark.utils.NotificationHelper
+import com.albertowisdom.wisdomspark.presentation.ui.components.SecurityStatusCard
+import com.albertowisdom.wisdomspark.presentation.ui.components.SecurityDebugCard
+import com.albertowisdom.wisdomspark.presentation.ui.components.PremiumDebugCard
+import com.albertowisdom.wisdomspark.premium.ui.PremiumBadge
+import com.albertowisdom.wisdomspark.premium.ui.PremiumViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.albertowisdom.wisdomspark.BuildConfig
+import com.albertowisdom.wisdomspark.R
+import com.albertowisdom.wisdomspark.data.managers.LanguageManager
 import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
+import com.albertowisdom.wisdomspark.data.preferences.SupportedLanguage
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -36,7 +60,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     userPreferences: UserPreferences,
-    modifier: Modifier = Modifier
+    languageManager: LanguageManager,
+    notificationHelper: NotificationHelper,
+    onNavigateToPremium: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    premiumViewModel: PremiumViewModel = hiltViewModel()
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -52,9 +80,62 @@ fun SettingsScreen(
     val notificationHour by userPreferences.notificationHour.collectAsState(initial = 9)
     val notificationMinute by userPreferences.notificationMinute.collectAsState(initial = 0)
     
+    // Estado del idioma usando StateFlow para cambio inmediato
+    val currentLanguage by userPreferences.appLanguage.collectAsState(initial = LocaleHelper.getSystemLanguage(context))
+    
     // Estado para el diálogo de información
     var showInfoDialog by remember { mutableStateOf(false) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    
+    // Estados para manejo de permisos de notificación
+    var showNotificationPermissionDialog by remember { mutableStateOf(false) }
+    var pendingNotificationToggle by remember { mutableStateOf(false) }
+    
+    // Launcher para solicitar permisos
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Si se concedió el permiso, activar notificaciones
+            scope.launch {
+                userPreferences.setNotificationsEnabled(pendingNotificationToggle)
+                userPreferences.setNotificationPermissionAsked(true)
+            }
+        } else {
+            // Si se denegó, mantener notificaciones desactivadas
+            scope.launch {
+                userPreferences.setNotificationsEnabled(false)
+                userPreferences.setNotificationPermissionAsked(true)
+            }
+        }
+        pendingNotificationToggle = false
+    }
+    
+    // Lista de idiomas soportados
+    val supportedLanguages = remember { userPreferences.getSupportedLanguages() }
+    
+    // Función para manejar el toggle de notificaciones con permisos
+    val handleNotificationToggle = { newValue: Boolean ->
+        if (newValue) {
+            // Usuario quiere activar notificaciones
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationHelper.hasNotificationPermission()) {
+                // Necesita permisos - mostrar diálogo explicativo
+                pendingNotificationToggle = newValue
+                showNotificationPermissionDialog = true
+            } else {
+                // Tiene permisos o no los necesita - activar directamente
+                scope.launch {
+                    userPreferences.setNotificationsEnabled(newValue)
+                }
+            }
+        } else {
+            // Usuario quiere desactivar notificaciones - permitir siempre
+            scope.launch {
+                userPreferences.setNotificationsEnabled(newValue)
+            }
+        }
+    }
     
     // Gradiente de fondo que respeta el tema
     val backgroundGradient = Brush.linearGradient(
@@ -76,7 +157,7 @@ fun SettingsScreen(
         ) {
             // Header
             Text(
-                text = "⚙️ Configuración",
+                text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -88,7 +169,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Personaliza tu experiencia WisdomSpark",
+                text = stringResource(R.string.settings_subtitle),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
@@ -99,11 +180,11 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(32.dp))
             
             // Sección: Experiencia de Usuario
-            SettingsSection(title = "🎨 Experiencia de Usuario") {
+            SettingsSection(title = stringResource(R.string.user_experience)) {
                 SettingsToggleItem(
                     icon = Icons.Default.SwapHoriz,
-                    title = "Modo Swipeable",
-                    description = "Interfaz tipo Tinder para explorar citas",
+                    title = stringResource(R.string.swipeable_mode),
+                    description = stringResource(R.string.swipeable_mode_desc),
                     isChecked = isSwipeableMode,
                     onCheckedChange = { newValue ->
                         if (isHapticEnabled) {
@@ -117,8 +198,8 @@ fun SettingsScreen(
                 
                 SettingsToggleItem(
                     icon = Icons.Default.DarkMode,
-                    title = "Modo Oscuro",
-                    description = "Tema oscuro para mayor comodidad visual",
+                    title = stringResource(R.string.dark_mode),
+                    description = stringResource(R.string.dark_mode_desc),
                     isChecked = isDarkMode,
                     onCheckedChange = { newValue ->
                         if (isHapticEnabled) {
@@ -132,8 +213,8 @@ fun SettingsScreen(
                 
                 SettingsToggleItem(
                     icon = Icons.Default.PhoneAndroid,
-                    title = "Vibración",
-                    description = "Feedback táctil en las interacciones",
+                    title = stringResource(R.string.vibration),
+                    description = stringResource(R.string.vibration_desc),
                     isChecked = isHapticEnabled,
                     onCheckedChange = { newValue ->
                         scope.launch {
@@ -146,24 +227,37 @@ fun SettingsScreen(
                         }
                     }
                 )
+                
+                // Selector de idioma
+                SettingsActionItem(
+                    icon = Icons.Default.Language,
+                    title = stringResource(R.string.language),
+                    description = supportedLanguages.find { it.code == currentLanguage }?.let { 
+                        "${it.flag} ${it.name}" 
+                    } ?: "🇪🇸 Español",
+                    onClick = {
+                        if (isHapticEnabled) {
+                            hapticManager.selection()
+                        }
+                        showLanguageDialog = true
+                    }
+                )
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             
             // Sección: Notificaciones
-            SettingsSection(title = "🔔 Notificaciones") {
+            SettingsSection(title = stringResource(R.string.notifications_section)) {
                 SettingsToggleItem(
                     icon = Icons.Default.Notifications,
-                    title = "Notificaciones Diarias",
-                    description = "Recibe tu dosis diaria de sabiduría",
+                    title = stringResource(R.string.daily_notifications),
+                    description = stringResource(R.string.daily_notifications_desc),
                     isChecked = areNotificationsEnabled,
                     onCheckedChange = { newValue ->
                         if (isHapticEnabled) {
                             hapticManager.lightImpact()
                         }
-                        scope.launch {
-                            userPreferences.setNotificationsEnabled(newValue)
-                        }
+                        handleNotificationToggle(newValue)
                     }
                 )
                 
@@ -171,7 +265,7 @@ fun SettingsScreen(
                 if (areNotificationsEnabled) {
                     SettingsActionItem(
                         icon = Icons.Default.Schedule,
-                        title = "Hora de Notificación",
+                        title = stringResource(R.string.notification_time),
                         description = "${String.format("%02d", notificationHour)}:${String.format("%02d", notificationMinute)}",
                         onClick = {
                             if (isHapticEnabled) {
@@ -186,29 +280,23 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             // Sección: Premium
-            SettingsSection(title = "💎 Premium") {
-                SettingsActionItem(
-                    icon = Icons.Default.Star,
-                    title = "WisdomSpark Premium",
-                    description = "Sin anuncios + funciones exclusivas",
-                    actionText = "€2.99",
-                    onClick = {
-                        if (isHapticEnabled) {
-                            hapticManager.heavyImpact()
-                        }
-                        // TODO: Lanzar Google Play Billing
-                    }
+            SettingsSection(title = stringResource(R.string.premium_section)) {
+                PremiumSettingsItem(
+                    premiumViewModel = premiumViewModel,
+                    isHapticEnabled = isHapticEnabled,
+                    hapticManager = hapticManager,
+                    onNavigateToPremium = onNavigateToPremium
                 )
             }
             
             Spacer(modifier = Modifier.height(24.dp))
             
             // Sección: Información
-            SettingsSection(title = "ℹ️ Información") {
+            SettingsSection(title = stringResource(R.string.info_section)) {
                 SettingsActionItem(
                     icon = Icons.Default.Share,
-                    title = "Compartir App",
-                    description = "Comparte WisdomSpark con tus amigos",
+                    title = stringResource(R.string.share_app),
+                    description = stringResource(R.string.share_app_desc),
                     onClick = {
                         if (isHapticEnabled) {
                             hapticManager.selection()
@@ -219,8 +307,8 @@ fun SettingsScreen(
                 
                 SettingsActionItem(
                     icon = Icons.Default.Email,
-                    title = "Contacto",
-                    description = "¿Tienes alguna sugerencia?",
+                    title = stringResource(R.string.contact),
+                    description = stringResource(R.string.contact_desc),
                     onClick = {
                         if (isHapticEnabled) {
                             hapticManager.selection()
@@ -231,8 +319,8 @@ fun SettingsScreen(
                 
                 SettingsActionItem(
                     icon = Icons.Default.Info,
-                    title = "Acerca de",
-                    description = "WisdomSpark v1.0 - Sabiduría diaria",
+                    title = stringResource(R.string.about),
+                    description = stringResource(R.string.about_desc),
                     onClick = {
                         if (isHapticEnabled) {
                             hapticManager.selection()
@@ -240,6 +328,26 @@ fun SettingsScreen(
                         showInfoDialog = true
                     }
                 )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Sección: Seguridad
+            SettingsSection(title = stringResource(R.string.settings_security_title)) {
+                SecurityStatusCard(
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                // Debug cards - only visible in debug builds
+                if (BuildConfig.DEBUG) {
+                    SecurityDebugCard(
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+
+                    PremiumDebugCard(
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
             }
             
             // Espaciado final
@@ -266,6 +374,94 @@ fun SettingsScreen(
                 showTimePickerDialog = false
             },
             onDismiss = { showTimePickerDialog = false }
+        )
+    }
+    
+    // Diálogo de selección de idioma
+    if (showLanguageDialog) {
+        LanguageSelectionDialog(
+            supportedLanguages = supportedLanguages,
+            currentLanguage = currentLanguage,
+            onLanguageSelected = { selectedLanguage ->
+                showLanguageDialog = false
+                
+                // OPTIMIZED: UI-FIRST pattern for immediate response (WhatsApp/Telegram style)
+                scope.launch {
+                    Log.d("SettingsScreen", "Immediate language change to '$selectedLanguage'")
+                    
+                    try {
+                        // 1. IMMEDIATE UI CHANGE (0ms response time)
+                        Log.d("SettingsScreen", "Step 1: Immediate UI change")
+                        LocaleHelper.changeLanguageImmediate(selectedLanguage)
+                        LocaleHelper.saveLanguage(context, selectedLanguage)
+                        
+                        // 2. UPDATE PREFERENCES IMMEDIATELY (sync)
+                        Log.d("SettingsScreen", "Step 2: Update preferences")
+                        userPreferences.setAppLanguage(selectedLanguage)
+                        
+                        // 3. MODERN LOCALE CHANGE (Android 13+)
+                        try {
+                            LocaleHelper.changeLanguageModern(selectedLanguage)
+                            Log.d("SettingsScreen", "Modern locale applied")
+                        } catch (e: Exception) {
+                            Log.d("SettingsScreen", "Modern locale failed (not critical): ${e.message}")
+                        }
+                        
+                        // 4. RECREATE ACTIVITY IMMEDIATELY for instant UX
+                        Log.d("SettingsScreen", "Step 3: Recreating activity for immediate UI update")
+                        (context as? Activity)?.recreate()
+                        
+                        // 5. BACKGROUND DATABASE SYNC (non-blocking)
+                        Log.d("SettingsScreen", "Step 4: Starting background database sync...")
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                // Background sync - doesn't block UI
+                                languageManager.changeLanguage(selectedLanguage)
+                                Log.d("SettingsScreen", "Background database sync completed for '$selectedLanguage'")
+                            } catch (e: Exception) {
+                                Log.d("SettingsScreen", "Background sync failed (app still works): ${e.message}")
+                                // Could show a subtle notification/toast if needed
+                            }
+                        }
+                        
+                        Log.d("SettingsScreen", "Immediate language change completed! Background sync in progress...")
+                        
+                    } catch (e: Exception) {
+                        Log.e("SettingsScreen", "Error in immediate language change: ${e.message}")
+                        
+                        // Fallback: still try to change UI immediately
+                        try {
+                            LocaleHelper.saveLanguage(context, selectedLanguage)
+                            LocaleHelper.changeLanguageModern(selectedLanguage)
+                            (context as? Activity)?.recreate()
+                            Log.d("SettingsScreen", "Fallback immediate change applied")
+                        } catch (fallbackError: Exception) {
+                            Log.e("SettingsScreen", "Complete fallback failure: ${fallbackError.message}")
+                        }
+                    }
+                }
+            },
+            onDismiss = { showLanguageDialog = false }
+        )
+    }
+    
+    // Diálogo de permisos de notificación
+    if (showNotificationPermissionDialog) {
+        NotificationPermissionDialog(
+            onGrantPermission = {
+                showNotificationPermissionDialog = false
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            },
+            onDenyPermission = {
+                showNotificationPermissionDialog = false
+                scope.launch {
+                    userPreferences.setNotificationsEnabled(false)
+                    userPreferences.setNotificationPermissionAsked(true)
+                }
+                pendingNotificationToggle = false
+            }
         )
     }
 }
@@ -434,7 +630,7 @@ private fun SettingsActionItem(
                 }
             } else {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
@@ -472,23 +668,23 @@ private fun InfoDialog(
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                InfoRow(label = "Versión", value = "1.0.0")
-                InfoRow(label = "Desarrollador", value = "Alberto Wisdom")
-                InfoRow(label = "Descripción", value = "Tu dosis diaria de sabiduría e inspiración")
-                
+                InfoRow(label = stringResource(R.string.about_version_label), value = BuildConfig.VERSION_NAME)
+                InfoRow(label = stringResource(R.string.about_developer_label), value = stringResource(R.string.info_developer_name))
+                InfoRow(label = stringResource(R.string.about_description_label), value = stringResource(R.string.about_description_text))
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Text(
-                    text = "WisdomSpark te ofrece citas inspiracionales cuidadosamente seleccionadas para motivarte cada día. Explora diferentes categorías, guarda tus favoritas y comparte la sabiduría con otros.",
+                    text = stringResource(R.string.about_long_description),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Text(
-                    text = "💝 Hecho con amor para inspirar y motivar",
+                    text = stringResource(R.string.about_made_with_love),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
@@ -503,7 +699,7 @@ private fun InfoDialog(
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text("Cerrar")
+                Text(stringResource(R.string.close))
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
@@ -543,35 +739,19 @@ private fun InfoRow(
  */
 private fun shareApp(context: Context) {
     try {
+        val appName = context.getString(R.string.app_name)
+        val shareSubject = context.getString(R.string.share_app_subject, appName)
+        val shareText = context.getString(R.string.share_app_text, appName)
+
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "¡Descubre WisdomSpark!")
-            putExtra(
-                Intent.EXTRA_TEXT,
-                """
-                🌟 ¡Te recomiendo WisdomSpark! ✨
-                
-                Una increíble app que te ofrece citas inspiracionales y sabiduría diaria para motivarte cada día.
-                
-                📱 Características:
-                • Citas inspiracionales diarias
-                • Diferentes categorías de sabiduría
-                • Modo swipeable estilo Tinder
-                • Guarda tus citas favoritas
-                • Comparte la inspiración
-                
-                💝 Descárgala y comienza tu viaje de inspiración diaria.
-                
-                #WisdomSpark #Inspiración #MotivacionDiaria
-                """.trimIndent()
-            )
+            putExtra(Intent.EXTRA_SUBJECT, shareSubject)
+            putExtra(Intent.EXTRA_TEXT, shareText)
         }
-        
-        val chooser = Intent.createChooser(shareIntent, "Compartir WisdomSpark")
-        context.startActivity(chooser)
+
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_via)))
     } catch (e: Exception) {
-        // Manejar error silenciosamente
-        println("Error al compartir la app: ${e.message}")
+        Log.d("SettingsScreen", "Error sharing app: ${e.message}")
     }
 }
 
@@ -579,63 +759,35 @@ private fun shareApp(context: Context) {
  * Función para abrir la app de email
  */
 private fun openEmailApp(context: Context) {
+    val feedbackSubject = context.getString(R.string.feedback_email_subject)
+    val feedbackBody = context.getString(
+        R.string.feedback_email_body,
+        BuildConfig.VERSION_NAME,
+        android.os.Build.VERSION.RELEASE,
+        "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
+    )
+    val sendFeedback = context.getString(R.string.send_feedback)
+
     try {
         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
             data = Uri.parse("mailto:")
             putExtra(Intent.EXTRA_EMAIL, arrayOf("albertomartinezmartin.palencia@gmail.com"))
-            putExtra(Intent.EXTRA_SUBJECT, "Feedback sobre WisdomSpark")
-            putExtra(
-                Intent.EXTRA_TEXT,
-                """
-                Hola Alberto,
-                
-                Te escribo desde WisdomSpark para compartir mi feedback:
-                
-                [Escribe aquí tus comentarios, sugerencias o reportes de bugs]
-                
-                Información del dispositivo:
-                - App: WisdomSpark v1.0.0
-                - Android: ${android.os.Build.VERSION.RELEASE}
-                - Dispositivo: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}
-                
-                ¡Gracias por crear esta increíble app!
-                
-                Saludos cordiales
-                """.trimIndent()
-            )
+            putExtra(Intent.EXTRA_SUBJECT, feedbackSubject)
+            putExtra(Intent.EXTRA_TEXT, feedbackBody)
         }
-        
-        context.startActivity(Intent.createChooser(emailIntent, "Enviar feedback"))
+        context.startActivity(Intent.createChooser(emailIntent, sendFeedback))
     } catch (e: Exception) {
-        // Si no hay app de email, intentar con ACTION_SEND
+        // Fallback: ACTION_SEND if no email app handles mailto
         try {
             val fallbackIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_EMAIL, arrayOf("albertomartinezmartin.palencia@gmail.com"))
-                putExtra(Intent.EXTRA_SUBJECT, "Feedback sobre WisdomSpark")
-                putExtra(
-                    Intent.EXTRA_TEXT,
-                    """
-                    Hola Alberto,
-                    
-                    Te escribo desde WisdomSpark para compartir mi feedback:
-                    
-                    [Escribe aquí tus comentarios, sugerencias o reportes de bugs]
-                    
-                    Información del dispositivo:
-                    - App: WisdomSpark v1.0.0
-                    - Android: ${android.os.Build.VERSION.RELEASE}
-                    - Dispositivo: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}
-                    
-                    ¡Gracias por crear esta increíble app!
-                    
-                    Saludos cordiales
-                    """.trimIndent()
-                )
+                putExtra(Intent.EXTRA_SUBJECT, feedbackSubject)
+                putExtra(Intent.EXTRA_TEXT, feedbackBody)
             }
-            context.startActivity(Intent.createChooser(fallbackIntent, "Enviar feedback"))
+            context.startActivity(Intent.createChooser(fallbackIntent, sendFeedback))
         } catch (e2: Exception) {
-            println("Error al abrir email: ${e2.message}")
+            Log.d("SettingsScreen", "Error opening email: ${e2.message}")
         }
     }
 }
@@ -658,7 +810,7 @@ private fun TimePickerDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Hora de Notificación",
+                text = stringResource(R.string.settings_notification_time_title),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -670,7 +822,7 @@ private fun TimePickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Selecciona cuándo quieres recibir tu cita diaria",
+                    text = stringResource(R.string.settings_notification_time_subtitle),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
@@ -707,7 +859,7 @@ private fun TimePickerDialog(
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text("Guardar")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
@@ -717,11 +869,236 @@ private fun TimePickerDialog(
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
-                Text("Cancelar")
+                Text(stringResource(R.string.cancel))
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
         titleContentColor = MaterialTheme.colorScheme.onSurface,
         textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     )
+}
+
+@Composable
+private fun LanguageSelectionDialog(
+    supportedLanguages: List<SupportedLanguage>,
+    currentLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.select_language),
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = stringResource(R.string.select_language_desc),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                supportedLanguages.forEach { language ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { 
+                                Log.d("SettingsScreen", "Language clicked: ${language.name} (${language.code})")
+                                onLanguageSelected(language.code) 
+                            },
+                        color = if (language.code == currentLanguage) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        } else {
+                            Color.Transparent
+                        },
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = language.flag,
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            
+                            Text(
+                                text = language.name,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = if (language.code == currentLanguage) {
+                                        FontWeight.Bold
+                                    } else {
+                                        FontWeight.Normal
+                                    },
+                                    color = if (language.code == currentLanguage) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    }
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            
+                            if (language.code == currentLanguage) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = stringResource(R.string.selected),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(stringResource(R.string.close))
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+
+@Composable
+private fun NotificationPermissionDialog(
+    onGrantPermission: () -> Unit,
+    onDenyPermission: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDenyPermission,
+        title = { 
+            Text(
+                text = stringResource(R.string.daily_notifications),
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.daily_notifications_desc) + "\n\n" + 
+                      stringResource(R.string.notification_permission_request),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onGrantPermission
+            ) {
+                Text(stringResource(R.string.yes_i_want_inspiration))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDenyPermission
+            ) {
+                Text(stringResource(R.string.no_thanks))
+            }
+        }
+    )
+}
+
+/**
+ * Componente de configuración Premium
+ */
+@Composable
+private fun PremiumSettingsItem(
+    premiumViewModel: PremiumViewModel,
+    isHapticEnabled: Boolean,
+    hapticManager: HapticManager,
+    onNavigateToPremium: () -> Unit
+) {
+    val premiumUiState by premiumViewModel.uiState.collectAsState()
+    
+    if (premiumUiState.isPremium) {
+        // Usuario Premium - mostrar estado activo
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                    RoundedCornerShape(12.dp)
+                )
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "👑",
+                    fontSize = 24.sp
+                )
+                
+                Column {
+                    Text(
+                        text = stringResource(R.string.premium_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = stringResource(R.string.premium_all_features),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            PremiumBadge()
+        }
+        
+        // Botón para gestionar suscripción
+        SettingsActionItem(
+            icon = Icons.Default.Settings,
+            title = stringResource(R.string.premium_manage_title),
+            description = stringResource(R.string.premium_manage_description),
+            onClick = {
+                if (isHapticEnabled) {
+                    hapticManager.lightImpact()
+                }
+                onNavigateToPremium()
+            }
+        )
+    } else {
+        // Usuario no Premium - botón de upgrade
+        SettingsActionItem(
+            icon = Icons.Default.Star,
+            title = stringResource(R.string.premium_title),
+            description = stringResource(R.string.premium_desc),
+            actionText = "👑 Upgrade",
+            onClick = {
+                if (isHapticEnabled) {
+                    hapticManager.heavyImpact()
+                }
+                onNavigateToPremium()
+            }
+        )
+    }
 }

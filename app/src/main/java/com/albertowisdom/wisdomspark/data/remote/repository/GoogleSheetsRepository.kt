@@ -4,6 +4,8 @@ import android.util.Log
 import com.albertowisdom.wisdomspark.data.local.database.dao.QuoteDao
 import com.albertowisdom.wisdomspark.data.local.database.entities.QuoteEntity
 import com.albertowisdom.wisdomspark.data.remote.GoogleSheetsApi
+import com.albertowisdom.wisdomspark.data.remote.GoogleSheetsApi.Companion.DEFAULT_API_KEY
+import com.albertowisdom.wisdomspark.data.remote.GoogleSheetsApi.Companion.DEFAULT_SPREADSHEET_ID
 import com.albertowisdom.wisdomspark.data.remote.dto.QuoteDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,14 +24,6 @@ class GoogleSheetsRepository @Inject constructor(
     
     companion object {
         private const val TAG = "GoogleSheetsRepository"
-        
-        // Usando credenciales de GoogleSheetsApi como fallback
-        const val DEFAULT_API_KEY = GoogleSheetsApi.DEFAULT_API_KEY
-        const val DEFAULT_SPREADSHEET_ID = GoogleSheetsApi.DEFAULT_SPREADSHEET_ID
-        
-        // Para testing (usar hojas públicas de Google)
-        const val TEST_API_KEY = "AIzaSyBe1D-AsJPPsqr15sXo9tVQKxNLEEHfnBs" // Ejemplo público
-        const val TEST_SPREADSHEET_ID = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
     }
     
     /**
@@ -37,16 +31,19 @@ class GoogleSheetsRepository @Inject constructor(
      * @param apiKey Clave de API (opcional, usa default si no se proporciona)
      * @param spreadsheetId ID de la hoja (opcional, usa default si no se proporciona) 
      * @param forceUpdate Fuerza actualización aunque ya existan datos
+     * @param language Idioma específico a sincronizar (null para todos los idiomas)
      * @return Resultado de la sincronización
      */
     suspend fun syncQuotes(
         apiKey: String = DEFAULT_API_KEY,
         spreadsheetId: String = DEFAULT_SPREADSHEET_ID,
-        forceUpdate: Boolean = false
+        forceUpdate: Boolean = false,
+        language: String? = null
     ): SyncResult = withContext(Dispatchers.IO) {
         
         try {
-            Log.d(TAG, "Iniciando sincronización de contenido...")
+            val languageInfo = language?.let { "para idioma: $it" } ?: "para todos los idiomas"
+            Log.d(TAG, "Iniciando sincronización de contenido $languageInfo...")
             
             // Verificar si ya hay datos y no se fuerza actualización
             if (!forceUpdate && quoteDao.getQuotesCount() > 0) {
@@ -79,6 +76,10 @@ class GoogleSheetsRepository @Inject constructor(
                     val quoteDtos = sheetsResponse.values.mapNotNull { row ->
                         QuoteDto.fromSheetRow(row)
                     }.filter { it.active } // Solo citas activas
+                     .filter { dto -> 
+                         // Filtrar por idioma si se especifica
+                         language?.let { dto.language.equals(it, ignoreCase = true) } ?: true
+                     }
                     
                     if (quoteDtos.isNotEmpty()) {
                         // Convertir a entities y guardar
@@ -87,6 +88,7 @@ class GoogleSheetsRepository @Inject constructor(
                                 text = dto.text,
                                 author = dto.author,
                                 category = dto.category,
+                                language = dto.language, // Usar idioma del DTO
                                 isFavorite = false, // Por defecto no favorito
                                 dateShown = null // Sin asignar fecha
                             )

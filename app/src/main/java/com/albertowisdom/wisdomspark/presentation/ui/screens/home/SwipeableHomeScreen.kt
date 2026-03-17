@@ -25,6 +25,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -32,13 +33,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.albertowisdom.wisdomspark.R
 import com.albertowisdom.wisdomspark.ads.AdMobManager
 import com.albertowisdom.wisdomspark.ads.BannerAdView
 import com.albertowisdom.wisdomspark.data.models.Quote
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
 import com.albertowisdom.wisdomspark.utils.ShareUtils
 import com.albertowisdom.wisdomspark.utils.getCategoryEmoji
+import com.albertowisdom.wisdomspark.utils.DateUtils
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
@@ -111,13 +115,15 @@ fun SwipeableHomeScreen(
     // Estado para manejar las cartas restantes en el stack
     var remainingQuotes by remember { mutableStateOf(listOf<Quote>()) }
 
-    // Inicializar el stack cuando carga la cita del día
-    LaunchedEffect(uiState.todayQuote) {
-        remainingQuotes = buildList {
-            // Agregar la cita del día como primera si está disponible
-            uiState.todayQuote?.let { add(it) }
-            // Agregar citas de muestra
-            addAll(sampleQuotes)
+    // Inicializar el stack cuando carga la cita del día (solo si cambia el ID)
+    LaunchedEffect(uiState.todayQuote?.id) {
+        if (uiState.todayQuote != null) {
+            remainingQuotes = buildList {
+                // Agregar la cita del día como primera si está disponible
+                add(uiState.todayQuote!!)
+                // Agregar citas de muestra
+                addAll(sampleQuotes)
+            }
         }
     }
 
@@ -182,55 +188,74 @@ fun SwipeableHomeScreen(
                             val cardIndex = visibleCards.size - 1 - reverseIndex
                             val stackLevel = cardIndex
 
-                            SwipeableQuoteCard(
-                                quote = quote,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .zIndex((10 - stackLevel).toFloat()), // Z-index correcto
-                                isActive = stackLevel == 0,
-                                stackLevel = stackLevel,
-                                onSwipeLeft = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    // Swipe izquierda: solo pasar/rechazar
-                                    removeTopCard()
-                                },
-                                onSwipeRight = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    // Swipe derecha: agregar a favoritos
-                                    val isQuoteOfTheDay = uiState.todayQuote?.let {
-                                        it.id == quote.id
-                                    } ?: false
+                            // Key para estabilidad de Compose
+                            key(quote.id) {
+                                SwipeableQuoteCard(
+                                    quote = quote,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .zIndex((10 - stackLevel).toFloat()) // Z-index correcto
+                                        .testTag("swipeable_quote_card"),
+                                    isActive = stackLevel == 0,
+                                    stackLevel = stackLevel,
+                                    onSwipeLeft = remember {
+                                        {
+                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            // Swipe izquierda: solo pasar/rechazar
+                                            removeTopCard()
+                                        }
+                                    },
+                                    onSwipeRight = remember {
+                                        {
+                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            // Swipe derecha: agregar a favoritos
+                                            val isQuoteOfTheDay = uiState.todayQuote?.let {
+                                                it.id == quote.id
+                                            } ?: false
 
-                                    if (isQuoteOfTheDay) {
-                                        viewModel.toggleFavorite()
+                                            if (isQuoteOfTheDay) {
+                                                viewModel.toggleFavorite()
+                                            }
+                                            removeTopCard()
+                                        }
+                                    },
+                                    onSwipeUp = remember {
+                                        {
+                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            // Swipe arriba: compartir quote
+                                            ShareUtils.shareQuote(context, quote)
+                                            removeTopCard()
+                                        }
                                     }
-                                    removeTopCard()
-                                },
-                                onSwipeUp = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    // Swipe arriba: compartir quote
-                                    ShareUtils.shareQuote(context, quote)
-                                    removeTopCard()
-                                }
-                            )
+                                )
+                            }
                         }
                     }
 
-                    // Indicador de progreso dinámico
-                    val totalQuotes = (if (uiState.todayQuote != null) 1 else 0) + sampleQuotes.size
-                    val remainingCount = remainingQuotes.size
-                    val currentIndex = totalQuotes - remainingCount
+                    // Indicador de progreso dinámico - optimizado con derivedStateOf
+                    val progressState by remember {
+                        derivedStateOf {
+                            val totalQuotes = (if (uiState.todayQuote != null) 1 else 0) + sampleQuotes.size
+                            val remainingCount = remainingQuotes.size
+                            val currentIndex = totalQuotes - remainingCount
+                            Triple(currentIndex, totalQuotes, remainingCount)
+                        }
+                    }
+                    val (currentIndex, totalQuotes, remainingCount) = progressState
 
                     ProgressIndicator(
                         currentIndex = currentIndex,
                         total = totalQuotes,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .testTag("progress_indicator")
                     )
                 }
                 else -> {
                     // Estado cuando no hay cartas - mostrar mensaje
                     NoMoreCardsState(
-                        onRefreshClick = { viewModel.generateNewQuotes() }
+                        onRefreshClick = { viewModel.generateNewQuotes() },
+                        modifier = Modifier.testTag("no_more_cards")
                     )
                 }
             }
@@ -311,10 +336,9 @@ private fun DecorativeBackground() {
 
 @Composable
 private fun SwipeableHeader(onNavigateToSettings: () -> Unit = {}) {
-    val today = remember {
-        SimpleDateFormat("EEEE, d 'de' MMMM", Locale.forLanguageTag("es-ES"))
-            .format(Date())
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    val context = LocalContext.current
+    val today = remember(context) {
+        DateUtils.getCurrentDateFormatted(context)
     }
 
     Column(
@@ -332,14 +356,14 @@ private fun SwipeableHeader(onNavigateToSettings: () -> Unit = {}) {
                 modifier = Modifier.weight(1f, fill = false)
             ) {
                 Text(
-                    text = "WisdomSpark",
+                    text = stringResource(R.string.app_title),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 )
                 Text(
-                    text = "Desliza para descubrir",
+                    text = stringResource(R.string.swipe_to_discover),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -409,7 +433,7 @@ private fun LoadingStateSwipeable() {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Preparando sabiduría...",
+                        text = stringResource(R.string.preparing_wisdom_ellipsis),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -456,7 +480,7 @@ private fun ErrorStateSwipeable(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Oops...",
+                        text = stringResource(R.string.oops),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -476,7 +500,7 @@ private fun ErrorStateSwipeable(
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Reintentar")
+                        Text(stringResource(R.string.retry))
                     }
                 }
             }
@@ -486,10 +510,11 @@ private fun ErrorStateSwipeable(
 
 @Composable
 private fun NoMoreCardsState(
-    onRefreshClick: () -> Unit
+    onRefreshClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .fillMaxHeight()
             .padding(40.dp),
@@ -520,7 +545,7 @@ private fun NoMoreCardsState(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "¡Increíble!",
+                        text = stringResource(R.string.amazing),
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -528,7 +553,7 @@ private fun NoMoreCardsState(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Has revisado toda la sabiduría de hoy",
+                        text = stringResource(R.string.reviewed_all_wisdom),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -542,7 +567,7 @@ private fun NoMoreCardsState(
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Más Sabiduría")
+                        Text(stringResource(R.string.more_wisdom))
                     }
                 }
             }
@@ -658,36 +683,36 @@ private fun SwipeableQuoteCard(
 
     val swipeThreshold = 200f
 
-    // Calcular transformaciones del stack
-    val stackOffset = (stackLevel * 8).dp
-    val stackScale = 1f - (stackLevel * 0.04f)
-    val stackAlpha = if (stackLevel == 0) 1f else 0.8f - (stackLevel * 0.2f)
+    // Calcular transformaciones del stack - memoizadas para evitar cálculos repetidos
+    val stackOffset = remember(stackLevel) { (stackLevel * 8).dp }
+    val stackScale = remember(stackLevel) { 1f - (stackLevel * 0.04f) }
+    val stackAlpha = remember(stackLevel) { 
+        if (stackLevel == 0) 1f else 0.8f - (stackLevel * 0.2f) 
+    }
 
-    // Animaciones para reset automático
-    val animatedOffsetX by animateFloatAsState(
-        targetValue = offsetX,
-        animationSpec = spring(
+    // Animaciones para reset automático - memoizadas para mejor rendimiento
+    val springAnimSpec = remember {
+        spring<Float>(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMedium
-        ),
+        )
+    }
+    
+    val animatedOffsetX by animateFloatAsState(
+        targetValue = offsetX,
+        animationSpec = springAnimSpec,
         label = "offsetX"
     )
 
     val animatedOffsetY by animateFloatAsState(
         targetValue = offsetY,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
+        animationSpec = springAnimSpec,
         label = "offsetY"
     )
 
     val animatedRotation by animateFloatAsState(
         targetValue = rotation,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
+        animationSpec = springAnimSpec,
         label = "rotation"
     )
 
@@ -719,37 +744,48 @@ private fun SwipeableQuoteCard(
                 if (isActive) {
                     detectDragGestures(
                         onDragEnd = {
+                            val swipeDistance = kotlin.math.sqrt(offsetX * offsetX + offsetY * offsetY)
+                            
                             when {
-                                abs(offsetX) > swipeThreshold -> {
-                                    if (offsetX > 0) {
-                                        onSwipeRight()
-                                    } else {
-                                        onSwipeLeft()
-                                    }
-                                    // Reset inmediato
+                                // Swipe arriba (compartir)
+                                offsetY < -swipeThreshold && kotlin.math.abs(offsetY) > kotlin.math.abs(offsetX) -> {
+                                    // Resetear inmediatamente antes de la acción
                                     offsetX = 0f
                                     offsetY = 0f
                                     rotation = 0f
-                                }
-                                offsetY < -swipeThreshold -> {
                                     onSwipeUp()
-                                    // Reset inmediato
+                                }
+                                // Swipe derecha (favorito)
+                                offsetX > swipeThreshold && kotlin.math.abs(offsetX) > kotlin.math.abs(offsetY) -> {
+                                    // Resetear inmediatamente antes de la acción
                                     offsetX = 0f
                                     offsetY = 0f
                                     rotation = 0f
+                                    onSwipeRight()
                                 }
+                                // Swipe izquierda (pasar)
+                                offsetX < -swipeThreshold && kotlin.math.abs(offsetX) > kotlin.math.abs(offsetY) -> {
+                                    // Resetear inmediatamente antes de la acción
+                                    offsetX = 0f
+                                    offsetY = 0f
+                                    rotation = 0f
+                                    onSwipeLeft()
+                                }
+                                // Si no alcanza el threshold, resetear suavemente
                                 else -> {
-                                    // Reset suave
                                     offsetX = 0f
                                     offsetY = 0f
                                     rotation = 0f
                                 }
                             }
                         }
-                    ) { change, _ ->
-                        offsetX += change.position.x
-                        offsetY += change.position.y
-                        rotation = (offsetX / 20f).coerceIn(-15f, 15f)
+                    ) { _, dragAmount ->
+                        // Actualizar posición durante el drag
+                        offsetX += dragAmount.x * 0.8f // Reducir sensibilidad
+                        offsetY += dragAmount.y * 0.8f
+                        
+                        // Calcular rotación basada en posición X
+                        rotation = (offsetX / 10f).coerceIn(-45f, 45f)
                     }
                 }
             },

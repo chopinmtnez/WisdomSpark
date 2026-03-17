@@ -2,6 +2,7 @@
 <resources>
     <!-- WisdomSpark Colors -->
     <color name="wisdom_green">#6BB6A3</color>
+    <color name="wisdom_background">#F4F1E8</color>
     <color name="wisdom_light_green">#8BCAA8</color>
     <color name="wisdom_dark_green">#4A8B7A</color>
     

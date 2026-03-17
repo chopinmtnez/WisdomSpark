@@ -6,13 +6,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.albertowisdom.wisdomspark.ads.AdMobManager
+import com.albertowisdom.wisdomspark.data.managers.LanguageManager
 import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
+import com.albertowisdom.wisdomspark.utils.NotificationHelper
 import com.albertowisdom.wisdomspark.presentation.ui.screens.categories.CategoriesScreen
 import com.albertowisdom.wisdomspark.presentation.ui.screens.categories.CategoryDetailScreen
 import com.albertowisdom.wisdomspark.presentation.ui.screens.favorites.FavoritesScreen
 import com.albertowisdom.wisdomspark.presentation.ui.screens.home.EnhancedHomeScreen
-import com.albertowisdom.wisdomspark.presentation.ui.screens.home.HomeScreen
+import com.albertowisdom.wisdomspark.presentation.ui.screens.onboarding.LanguageSelectionScreen
 import com.albertowisdom.wisdomspark.presentation.ui.screens.settings.SettingsScreen
+import com.albertowisdom.wisdomspark.premium.ui.PremiumScreen
+import java.net.URLDecoder
+import java.net.URLEncoder
 
 /**
  * NavHost con soporte para AdMob y UserPreferences en todas las pantallas
@@ -22,19 +27,32 @@ fun WisdomNavHost(
     navController: NavHostController,
     adMobManager: AdMobManager,
     userPreferences: UserPreferences,
+    languageManager: LanguageManager,
+    notificationHelper: NotificationHelper,
+    startDestination: String = Screen.Home.route,
     modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
+        composable(Screen.LanguageSelection.route) {
+            LanguageSelectionScreen(
+                onLanguageSelected = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.LanguageSelection.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
+        }
         composable(Screen.Home.route) {
             EnhancedHomeScreen(
                 adMobManager = adMobManager,
                 userPreferences = userPreferences,
                 onNavigateToSettings = {
-                    println("🔧 Navigating to Settings from Swipe mode")
                     navController.navigate(Screen.Settings.route) {
                         popUpTo(navController.graph.startDestinationId) {
                             saveState = true
@@ -50,15 +68,17 @@ fun WisdomNavHost(
             CategoriesScreen(
                 adMobManager = adMobManager,
                 onCategoryClick = { categoryName ->
-                    // Navegar al detalle de la categoría
-                    println("📚 Navigating to CategoryDetail: $categoryName")
-                    navController.navigate("category_detail/$categoryName")
+                    // Navegar al detalle de la categoría (URL-encoded para caracteres especiales)
+                    val encodedName = URLEncoder.encode(categoryName, "UTF-8")
+                    navController.navigate("category_detail/$encodedName")
                 }
             )
         }
         
         composable("category_detail/{categoryName}") { backStackEntry ->
-            val categoryName = backStackEntry.arguments?.getString("categoryName") ?: ""
+            val categoryName = URLDecoder.decode(
+                backStackEntry.arguments?.getString("categoryName") ?: "", "UTF-8"
+            )
             CategoryDetailScreen(
                 categoryName = categoryName,
                 adMobManager = adMobManager,
@@ -72,7 +92,6 @@ fun WisdomNavHost(
             FavoritesScreen(
                 adMobManager = adMobManager,
                 onNavigateToHome = {
-                    println("❤️ Navigating to Home from Favorites")
                     navController.navigate(Screen.Home.route) {
                         popUpTo(navController.graph.startDestinationId) {
                             saveState = true
@@ -86,7 +105,22 @@ fun WisdomNavHost(
         
         composable(Screen.Settings.route) {
             SettingsScreen(
-                userPreferences = userPreferences
+                userPreferences = userPreferences,
+                languageManager = languageManager,
+                notificationHelper = notificationHelper,
+                onNavigateToPremium = {
+                    navController.navigate(Screen.Premium.route) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        
+        composable(Screen.Premium.route) {
+            PremiumScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
     }
@@ -127,5 +161,19 @@ sealed class Screen(
         title = "Ajustes",
         selectedEmoji = "⚙️",
         unselectedIcon = "🔧"
+    )
+    
+    object Premium : Screen(
+        route = "premium",
+        title = "Premium",
+        selectedEmoji = "👑",
+        unselectedIcon = "💎"
+    )
+    
+    object LanguageSelection : Screen(
+        route = "language_selection",
+        title = "Selección de idioma",
+        selectedEmoji = "🌐",
+        unselectedIcon = "🌍"
     )
 }

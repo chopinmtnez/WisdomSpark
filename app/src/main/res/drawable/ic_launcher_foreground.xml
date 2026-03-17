@@ -5,8 +5,104 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Wisdom icon (lightbulb) centered -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M36,84c0,2.2 1.8,4 4,4h28c2.2,0 4,-1.8 4,-4v-4H36v4zM54,8C44.06,8 36,16.06 36,26c0,9.52 4.76,17.88 12,22.96V56c0,2.2 1.8,4 4,4h24c2.2,0 4,-1.8 4,-4v-7.04c7.24,-5.08 12,-13.44 12,-22.96 0,-15.44 -12.56,-28 -28,-28z"/>
+    <!-- WisdomSpark logo simplificado - Libro abierto con llama -->
+    <group android:translateX="54" android:translateY="54">
+        <!-- Libro abierto - página izquierda -->
+        <path
+            android:fillColor="#F5F5F5"
+            android:pathData="M-18,-12 L-2,-12 L-2,12 L-18,12 Z"/>
+        
+        <!-- Libro abierto - página derecha -->
+        <path
+            android:fillColor="#F5F5F5"
+            android:pathData="M2,-12 L18,-12 L18,12 L2,12 Z"/>
+        
+        <!-- Contorno del libro izquierdo -->
+        <path
+            android:strokeColor="#B0B0B0"
+            android:strokeWidth="1.5"
+            android:pathData="M-18,-12 L-2,-12 L-2,12 L-18,12 Z"/>
+        
+        <!-- Contorno del libro derecho -->
+        <path
+            android:strokeColor="#B0B0B0"
+            android:strokeWidth="1.5"
+            android:pathData="M2,-12 L18,-12 L18,12 L2,12 Z"/>
+        
+        <!-- Líneas de texto página izquierda -->
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M-16,-8 L-4,-8"/>
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M-16,-4 L-4,-4"/>
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M-16,0 L-4,0"/>
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M-16,4 L-4,4"/>
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M-16,8 L-4,8"/>
+        
+        <!-- Líneas de texto página derecha -->
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M4,-8 L16,-8"/>
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M4,-4 L16,-4"/>
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M4,0 L16,0"/>
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M4,4 L16,4"/>
+        <path
+            android:strokeColor="#D0D0D0"
+            android:strokeWidth="0.8"
+            android:pathData="M4,8 L16,8"/>
+        
+        <!-- Llama naranja central - forma principal -->
+        <path
+            android:fillColor="#FF6B35"
+            android:pathData="M0,-8 L3,-5 L3,5 L0,8 L-3,5 L-3,-5 Z"/>
+        
+        <!-- Parte interna de la llama -->
+        <path
+            android:fillColor="#FF8A50"
+            android:pathData="M0,-5 L2,-3 L2,3 L0,5 L-2,3 L-2,-3 Z"/>
+        
+        <!-- Estrella central blanca -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M0,-2 L0.5,0 L0,2 L-0.5,0 Z"/>
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M-2,0 L0,-0.5 L2,0 L0,0.5 Z"/>
+        
+        <!-- Chispas doradas simples -->
+        <path
+            android:fillColor="#FFB74D"
+            android:pathData="M-8,-8 L-7,-7 L-8,-6 L-9,-7 Z"/>
+        <path
+            android:fillColor="#FFB74D"
+            android:pathData="M8,-8 L9,-7 L8,-6 L7,-7 Z"/>
+        <path
+            android:fillColor="#FFB74D"
+            android:pathData="M-6,8 L-5,9 L-6,10 L-7,9 Z"/>
+        <path
+            android:fillColor="#FFB74D"
+            android:pathData="M6,8 L7,9 L6,10 L5,9 Z"/>
+    </group>
 </vector>

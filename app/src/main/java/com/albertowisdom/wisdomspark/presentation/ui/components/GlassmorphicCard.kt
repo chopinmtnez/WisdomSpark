@@ -18,17 +18,26 @@ import dev.chrisbanes.haze.hazeChild
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
 
 /**
- * 🔮 Componente Glassmorphic Premium para WisdomSpark
- * Utiliza Haze library para efectos de glassmorphism de nivel profesional
+ * Singleton para manejar HazeState de manera eficiente
+ */
+object HazeStateManager {
+    val globalHazeState = HazeState()
+}
+
+/**
+ * Componente Glassmorphic Premium para WisdomSpark
+ * Utiliza Haze library para efectos de glassmorphism de nivel profesional.
+ * Todos los colores se resuelven desde MaterialTheme.colorScheme para
+ * funcionar correctamente en light y dark mode.
  */
 @Composable
 fun GlassmorphicCard(
     modifier: Modifier = Modifier,
-    hazeState: HazeState = remember { HazeState() },
+    hazeState: HazeState = HazeStateManager.globalHazeState,
     blurRadius: Dp = 25.dp,
     alpha: Float = 0.9f,
-    backgroundColor: Color = Color.White,
-    borderColor: Color = Color.White.copy(alpha = 0.3f),
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    borderColor: Color = MaterialTheme.colorScheme.outlineVariant,
     borderWidth: Dp = 1.dp,
     cornerRadius: Dp = 20.dp,
     elevation: Dp = 12.dp,
@@ -60,23 +69,25 @@ fun GlassmorphicCard(
 }
 
 /**
- * 🌟 Variante Premium con gradiente glassmorphic
+ * Variante Premium con gradiente glassmorphic.
+ * Theme-aware: usa colorScheme para adaptarse a light/dark mode.
  */
 @Composable
 fun GlassmorphicCardPremium(
     modifier: Modifier = Modifier,
-    hazeState: HazeState = remember { HazeState() },
+    hazeState: HazeState = HazeStateManager.globalHazeState,
     blurRadius: Dp = 30.dp,
     cornerRadius: Dp = 24.dp,
     elevation: Dp = 16.dp,
     content: @Composable () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         modifier = modifier.hazeChild(
             state = hazeState,
             shape = RoundedCornerShape(cornerRadius),
             style = HazeDefaults.style(
-                backgroundColor = WisdomPearl.copy(alpha = 0.85f),
+                backgroundColor = colorScheme.background.copy(alpha = 0.85f),
                 blurRadius = blurRadius
             )
         ),
@@ -88,9 +99,9 @@ fun GlassmorphicCardPremium(
             width = 1.5.dp,
             brush = Brush.linearGradient(
                 colors = listOf(
-                    WisdomGold.copy(alpha = 0.4f),
-                    Color.White.copy(alpha = 0.3f),
-                    WisdomGold.copy(alpha = 0.4f)
+                    colorScheme.primary.copy(alpha = 0.4f),
+                    colorScheme.surface.copy(alpha = 0.3f),
+                    colorScheme.primary.copy(alpha = 0.4f)
                 )
             )
         ),
@@ -102,8 +113,8 @@ fun GlassmorphicCardPremium(
             modifier = Modifier.background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0.1f),
-                        WisdomChampagne.copy(alpha = 0.05f),
+                        colorScheme.surface.copy(alpha = 0.1f),
+                        colorScheme.primaryContainer.copy(alpha = 0.05f),
                         Color.Transparent
                     )
                 )
@@ -115,23 +126,25 @@ fun GlassmorphicCardPremium(
 }
 
 /**
- * 🎭 Variante para Header con glassmorphism sutil
+ * Variante para Header con glassmorphism sutil.
+ * Theme-aware: usa colorScheme para adaptarse a light/dark mode.
  */
 @Composable
 fun GlassmorphicHeader(
     modifier: Modifier = Modifier,
-    hazeState: HazeState = remember { HazeState() },
+    hazeState: HazeState = HazeStateManager.globalHazeState,
     blurRadius: Dp = 20.dp,
     cornerRadius: Dp = 28.dp,
     content: @Composable () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = modifier
             .hazeChild(
                 state = hazeState,
                 shape = RoundedCornerShape(cornerRadius),
                 style = HazeDefaults.style(
-                    backgroundColor = WisdomPearl.copy(alpha = 0.7f),
+                    backgroundColor = colorScheme.background.copy(alpha = 0.7f),
                     blurRadius = blurRadius
                 )
             )
@@ -143,8 +156,8 @@ fun GlassmorphicHeader(
             modifier = Modifier.background(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        WisdomGold.copy(alpha = 0.1f),
-                        Color.White.copy(alpha = 0.05f),
+                        colorScheme.primary.copy(alpha = 0.1f),
+                        colorScheme.surface.copy(alpha = 0.05f),
                         Color.Transparent
                     ),
                     radius = 200f
@@ -157,22 +170,24 @@ fun GlassmorphicHeader(
 }
 
 /**
- * 📱 Variante para Bottom Navigation glassmorphic
+ * Variante para Bottom Navigation glassmorphic.
+ * Theme-aware: usa colorScheme para adaptarse a light/dark mode.
  */
 @Composable
 fun GlassmorphicBottomNav(
     modifier: Modifier = Modifier,
-    hazeState: HazeState = remember { HazeState() },
+    hazeState: HazeState = HazeStateManager.globalHazeState,
     blurRadius: Dp = 35.dp,
     content: @Composable () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = modifier
             .hazeChild(
                 state = hazeState,
                 shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                 style = HazeDefaults.style(
-                    backgroundColor = WisdomPearl.copy(alpha = 0.9f),
+                    backgroundColor = colorScheme.background.copy(alpha = 0.9f),
                     blurRadius = blurRadius
                 )
             )
@@ -185,8 +200,8 @@ fun GlassmorphicBottomNav(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         Color.Transparent,
-                        WisdomBeige.copy(alpha = 0.3f),
-                        WisdomChampagne.copy(alpha = 0.2f)
+                        colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        colorScheme.primaryContainer.copy(alpha = 0.2f)
                     )
                 )
             )
@@ -197,23 +212,25 @@ fun GlassmorphicBottomNav(
 }
 
 /**
- * 🔧 Variante para elementos flotantes (FAB, Dialogs)
+ * Variante para elementos flotantes (FAB, Dialogs).
+ * Theme-aware: usa colorScheme para adaptarse a light/dark mode.
  */
 @Composable
 fun GlassmorphicFloating(
     modifier: Modifier = Modifier,
-    hazeState: HazeState = remember { HazeState() },
+    hazeState: HazeState = HazeStateManager.globalHazeState,
     blurRadius: Dp = 40.dp,
     cornerRadius: Dp = 16.dp,
     content: @Composable () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = modifier
             .hazeChild(
                 state = hazeState,
                 shape = RoundedCornerShape(cornerRadius),
                 style = HazeDefaults.style(
-                    backgroundColor = Color.White.copy(alpha = 0.8f),
+                    backgroundColor = colorScheme.surface.copy(alpha = 0.8f),
                     blurRadius = blurRadius
                 )
             )
@@ -225,8 +242,8 @@ fun GlassmorphicFloating(
             modifier = Modifier.background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0.2f),
-                        Color.White.copy(alpha = 0.1f),
+                        colorScheme.surface.copy(alpha = 0.2f),
+                        colorScheme.surface.copy(alpha = 0.1f),
                         Color.Transparent
                     )
                 )

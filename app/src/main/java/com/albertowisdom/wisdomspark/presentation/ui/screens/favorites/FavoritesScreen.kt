@@ -21,7 +21,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.albertowisdom.wisdomspark.R
 import com.albertowisdom.wisdomspark.ads.AdMobManager
 import com.albertowisdom.wisdomspark.ads.BannerAdView
 import com.albertowisdom.wisdomspark.data.models.Quote
@@ -71,7 +73,7 @@ fun FavoritesScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "❤️ Mis Favoritos",
+                            text = stringResource(R.string.favorites_title),
                             style = MaterialTheme.typography.headlineLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -79,7 +81,7 @@ fun FavoritesScreen(
                         )
                         
                         Text(
-                            text = "${uiState.favoriteQuotes.size} citas guardadas",
+                            text = stringResource(R.string.saved_quotes_count, uiState.favoriteQuotes.size),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -92,7 +94,7 @@ fun FavoritesScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Actualizar",
+                            contentDescription = stringResource(R.string.refresh_quote),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -114,7 +116,6 @@ fun FavoritesScreen(
                             },
                             onShareClick = { quote ->
                                 ShareUtils.shareQuote(context, quote)
-                                viewModel.onQuoteShared()
                             }
                         )
                     }
@@ -154,24 +155,14 @@ private fun FavoritesList(
             items = favorites,
             key = { it.id }
         ) { quote ->
-            AnimatedVisibility(
-                visible = true,
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(300)),
-                exit = slideOutVertically(
-                    targetOffsetY = { -it },
-                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(300))
-            ) {
-                QuoteCard(
-                    quote = quote,
-                    onFavoriteClick = { onFavoriteClick(quote) },
-                    onShareClick = { onShareClick(quote) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            QuoteCard(
+                quote = quote,
+                onFavoriteClick = { onFavoriteClick(quote) },
+                onShareClick = { onShareClick(quote) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem() // Anima entrada, salida y reordenamientos en LazyColumn
+            )
         }
         
         // Espaciado al final para mejor UX
@@ -192,12 +183,12 @@ private fun LoadingFavoritesSection() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             CircularProgressIndicator(
-                color = WisdomCoral,
+                color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 3.dp
             )
             
             Text(
-                text = "Cargando tus favoritos...",
+                text = stringResource(R.string.loading_favorites),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -245,11 +236,11 @@ private fun EmptyFavoritesSection(onNavigateToHome: () -> Unit = {}) {
                     imageVector = Icons.Default.Favorite,
                     contentDescription = null,
                     modifier = Modifier.size(64.dp),
-                    tint = WisdomCoral.copy(alpha = 0.5f)
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                 )
                 
                 Text(
-                    text = "No tienes favoritos aún",
+                    text = stringResource(R.string.no_favorites_yet),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -258,7 +249,7 @@ private fun EmptyFavoritesSection(onNavigateToHome: () -> Unit = {}) {
                 )
                 
                 Text(
-                    text = "Marca con ❤️ las citas que más te inspiren para guardarlas aquí",
+                    text = stringResource(R.string.favorites_instruction),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
@@ -268,10 +259,10 @@ private fun EmptyFavoritesSection(onNavigateToHome: () -> Unit = {}) {
                 Button(
                     onClick = onNavigateToHome,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = WisdomCoral
+                        containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text("Explorar Citas")
+                    Text(stringResource(R.string.today_quote))
                 }
             }
         }
