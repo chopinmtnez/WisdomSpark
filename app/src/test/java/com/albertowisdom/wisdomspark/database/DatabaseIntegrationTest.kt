@@ -1,6 +1,8 @@
 package com.albertowisdom.wisdomspark.database
 
 import com.albertowisdom.wisdomspark.data.local.database.entities.QuoteEntity
+import com.albertowisdom.wisdomspark.data.local.database.entities.toEntity
+import com.albertowisdom.wisdomspark.data.local.database.entities.toQuote
 import com.albertowisdom.wisdomspark.data.models.Quote
 import org.junit.Test
 import kotlin.test.*
@@ -48,8 +50,8 @@ class DatabaseIntegrationTest {
         )
         
         // Convertir a Entity usando extension function
-        val entity = com.albertowisdom.wisdomspark.data.local.database.entities.toEntity(originalQuote)
-        
+        val entity = originalQuote.toEntity()
+
         // Verificar conversión
         assertEquals(originalQuote.id, entity.id)
         assertEquals(originalQuote.text, entity.text)
@@ -58,9 +60,9 @@ class DatabaseIntegrationTest {
         assertEquals(originalQuote.language, entity.language)
         assertEquals(originalQuote.isFavorite, entity.isFavorite)
         assertEquals(originalQuote.dateShown, entity.dateShown)
-        
+
         // Convertir de vuelta a Quote
-        val convertedQuote = com.albertowisdom.wisdomspark.data.local.database.entities.toQuote(entity)
+        val convertedQuote = entity.toQuote()
         
         // Verificar que es idéntico al original
         assertEquals(originalQuote, convertedQuote)
@@ -119,7 +121,7 @@ class DatabaseIntegrationTest {
             assertTrue(quote.language.isNotEmpty())
             
             // Convertir a entity
-            val entity = com.albertowisdom.wisdomspark.data.local.database.entities.toEntity(quote)
+            val entity = quote.toEntity()
             assertNotNull(entity)
         }
         
