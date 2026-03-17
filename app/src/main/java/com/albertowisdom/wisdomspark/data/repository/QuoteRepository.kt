@@ -235,6 +235,8 @@ class QuoteRepository @Inject constructor(
         quoteDao.updateQuote(entity)
     }
 
+    suspend fun getFavoriteCount(): Int = quoteDao.getFavoriteQuotesCount()
+
     // ========== CATEGORÍAS ==========
     
     fun getQuotesByCategory(category: String, language: String = "es"): Flow<List<Quote>> {

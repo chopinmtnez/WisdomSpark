@@ -60,6 +60,11 @@ fun WisdomNavHost(
                         launchSingleTop = true
                         restoreState = true
                     }
+                },
+                onNavigateToPremium = {
+                    navController.navigate(Screen.Premium.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -84,6 +89,11 @@ fun WisdomNavHost(
                 adMobManager = adMobManager,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToPremium = {
+                    navController.navigate(Screen.Premium.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }

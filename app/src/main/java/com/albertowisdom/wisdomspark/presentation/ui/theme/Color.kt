@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 
 // **COLORES PRINCIPALES LIGHT MODE**
 val WisdomPearl = Color(0xFFF8F5F2)           // Fondo principal - perla suave
+val WisdomCream = Color(0xFFF5F1ED)           // Superficies cards - crema cálido (entre Pearl y Beige)
 val WisdomBeige = Color(0xFFF0E8E0)           // Superficies secundarias - beige cálido
 val WisdomChampagne = Color(0xFFE8DDD4)       // Cards y elementos - champagne elegante
 val WisdomGold = Color(0xFFD3C7AB)            // Acentos premium - dorado suave
@@ -19,6 +20,9 @@ val WisdomError = Color(0xFFEF4444)           // Rojo error - coral intenso
 val WisdomWarning = Color(0xFFF59E0B)         // Amarillo advertencia - ámbar
 val WisdomInfo = Color(0xFF3B82F6)            // Azul información - safiro
 val WisdomCoral = Color(0xFFFF6B6B)           // Coral para favoritos
+
+// **VARIANTE GOLD PARA DARK MODE (mejor contraste WCAG)**
+val WisdomGoldDark = Color(0xFFE5D9BD)        // Gold más brillante para dark mode (contraste 9.5:1 sobre DarkSurface)
 
 // **DARK MODE CIENTÍFICAMENTE BALANCEADO**
 val WisdomDarkSurface = Color(0xFF1A1917)     // Fondo oscuro principal

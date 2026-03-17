@@ -266,8 +266,8 @@ class BillingManager @Inject constructor(
      * Iniciar compra de suscripción
      */
     fun launchBillingFlow(activity: Activity, subscriptionPlan: SubscriptionPlan) {
-        val productDetails = _availableProducts.value.find { 
-            it.productId == subscriptionPlan.productId 
+        val productDetails = _availableProducts.value.find {
+            it.productId == subscriptionPlan.productId
         }
 
         if (productDetails == null) {
@@ -276,28 +276,33 @@ class BillingManager @Inject constructor(
             return
         }
 
-        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
-
-        if (offerToken == null) {
-            Log.e(tag, "Offer token no encontrado para: ${subscriptionPlan.productId}")
-            _purchaseState.value = PurchaseState.Error("Oferta no disponible")
-            return
-        }
-
-        val productDetailsParamsList = listOf(
+        // Para INAPP (Lifetime) no se necesita offerToken; para SUBS sí
+        val productDetailsParams = if (subscriptionPlan.isOneTimePurchase) {
+            // Compra única (INAPP) - sin offerToken
+            BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(productDetails)
+                .build()
+        } else {
+            // Suscripción (SUBS) - requiere offerToken
+            val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+            if (offerToken == null) {
+                Log.e(tag, "Offer token no encontrado para: ${subscriptionPlan.productId}")
+                _purchaseState.value = PurchaseState.Error("Oferta no disponible")
+                return
+            }
             BillingFlowParams.ProductDetailsParams.newBuilder()
                 .setProductDetails(productDetails)
                 .setOfferToken(offerToken)
                 .build()
-        )
+        }
 
         val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(productDetailsParamsList)
+            .setProductDetailsParamsList(listOf(productDetailsParams))
             .build()
 
         _purchaseState.value = PurchaseState.Loading
         val billingResult = billingClient.launchBillingFlow(activity, billingFlowParams)
-        
+
         if (billingResult.responseCode != BillingResponseCode.OK) {
             Log.e(tag, "Error iniciando billing flow: ${billingResult.debugMessage}")
             _purchaseState.value = PurchaseState.Error(billingResult.debugMessage)
@@ -337,10 +342,17 @@ class BillingManager @Inject constructor(
      * Obtener precio formateado de un plan
      */
     fun getFormattedPrice(subscriptionPlan: SubscriptionPlan): String? {
-        val productDetails = _availableProducts.value.find { 
-            it.productId == subscriptionPlan.productId 
+        val productDetails = _availableProducts.value.find {
+            it.productId == subscriptionPlan.productId
         }
-        return productDetails?.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+        return if (subscriptionPlan.isOneTimePurchase) {
+            // INAPP: precio de compra única
+            productDetails?.oneTimePurchaseOfferDetails?.formattedPrice
+        } else {
+            // SUBS: precio de la primera fase
+            productDetails?.subscriptionOfferDetails?.firstOrNull()
+                ?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+        }
     }
 
     /**

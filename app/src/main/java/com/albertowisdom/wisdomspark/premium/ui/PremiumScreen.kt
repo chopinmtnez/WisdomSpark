@@ -16,11 +16,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.albertowisdom.wisdomspark.R
 import com.albertowisdom.wisdomspark.premium.model.PremiumFeature
 import com.albertowisdom.wisdomspark.premium.model.PurchaseState
 import com.albertowisdom.wisdomspark.premium.model.SubscriptionPlan
@@ -37,7 +39,7 @@ fun PremiumScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
-    
+
     var showPurchaseDialog by remember { mutableStateOf(false) }
     var selectedPlan by remember { mutableStateOf<SubscriptionPlan?>(null) }
 
@@ -55,15 +57,15 @@ fun PremiumScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        "✨ WisdomSpark Premium",
+                        stringResource(R.string.premium_screen_title),
                         fontWeight = FontWeight.Bold
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -73,7 +75,7 @@ fun PremiumScreen(
             )
         }
     ) { paddingValues ->
-        
+
         if (uiState.isPremium) {
             // Usuario ya tiene Premium
             PremiumActiveContent(
@@ -128,7 +130,7 @@ private fun PremiumActiveContent(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         // Icono de Premium activo
         Box(
             modifier = Modifier
@@ -145,26 +147,26 @@ private fun PremiumActiveContent(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "👑",
+                text = "\uD83D\uDC51",
                 fontSize = 48.sp
             )
         }
-        
+
         Text(
-            text = "¡WisdomSpark Premium Activo!",
+            text = stringResource(R.string.premium_active_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.primary
         )
-        
+
         Text(
-            text = "Disfruta de todas las características Premium",
+            text = stringResource(R.string.premium_active_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
+
         // Información de la suscripción
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -178,65 +180,69 @@ private fun PremiumActiveContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Detalles de tu suscripción",
+                    text = stringResource(R.string.premium_subscription_details),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 subscriptionStatus.activePlan?.let { plan ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Plan:")
+                        Text(stringResource(R.string.premium_plan_label))
                         Text(
                             text = when (plan) {
-                                SubscriptionPlan.MONTHLY -> "Mensual"
-                                SubscriptionPlan.YEARLY -> "Anual"
-                                SubscriptionPlan.LIFETIME -> "De por vida"
+                                SubscriptionPlan.MONTHLY -> stringResource(R.string.subscription_monthly)
+                                SubscriptionPlan.YEARLY -> stringResource(R.string.subscription_yearly)
+                                SubscriptionPlan.LIFETIME -> stringResource(R.string.subscription_lifetime)
                             },
                             fontWeight = FontWeight.Medium
                         )
                     }
                 }
-                
+
                 if (subscriptionStatus.purchaseTime != null) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Fecha de compra:")
+                        Text(stringResource(R.string.premium_purchase_date))
                         Text(
-                            text = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
-                                .format(java.util.Date(subscriptionStatus.purchaseTime)),
+                            text = java.time.Instant.ofEpochMilli(subscriptionStatus.purchaseTime)
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)),
                             fontWeight = FontWeight.Medium
                         )
                     }
                 }
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Renovación automática:")
+                    Text(stringResource(R.string.premium_auto_renewal))
                     Text(
-                        text = if (subscriptionStatus.isAutoRenewing) "Activa" else "Inactiva",
+                        text = if (subscriptionStatus.isAutoRenewing)
+                            stringResource(R.string.premium_auto_renewal_active)
+                        else
+                            stringResource(R.string.premium_auto_renewal_inactive),
                         fontWeight = FontWeight.Medium,
-                        color = if (subscriptionStatus.isAutoRenewing) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
+                        color = if (subscriptionStatus.isAutoRenewing)
+                            MaterialTheme.colorScheme.primary
+                        else
                             MaterialTheme.colorScheme.error
                     )
                 }
             }
         }
-        
+
         // Características Premium disponibles
         PremiumFeaturesGrid(
             features = PremiumFeature.values().toList(),
             isUnlocked = true
         )
-        
+
         // Botón de actualizar
         OutlinedButton(
             onClick = onRefreshPurchases,
@@ -244,9 +250,9 @@ private fun PremiumActiveContent(
         ) {
             Icon(Icons.Default.Refresh, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Actualizar estado de suscripción")
+            Text(stringResource(R.string.premium_refresh_subscription))
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
@@ -268,28 +274,28 @@ private fun PremiumPurchaseContent(
     ) {
         // Header Premium
         PremiumHeader()
-        
+
         // Características Premium
         PremiumFeaturesGrid(
             features = viewModel.getAllPremiumFeatures(),
             isUnlocked = false
         )
-        
+
         // Planes de suscripción
         Text(
-            text = "Elige tu plan",
+            text = stringResource(R.string.premium_choose_plan),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(vertical = 16.dp)
         )
-        
+
         SubscriptionPlansGrid(
             plans = SubscriptionPlan.values().toList(),
             uiState = uiState,
             onPlanSelected = onPlanSelected,
             viewModel = viewModel
         )
-        
+
         // Información adicional
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -303,22 +309,19 @@ private fun PremiumPurchaseContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "💡 Información importante",
+                    text = stringResource(R.string.premium_important_info),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 Text(
-                    text = "• Cancela en cualquier momento desde Google Play Store\n" +
-                           "• Las suscripciones se renuevan automáticamente\n" +
-                           "• Política de reembolso según términos de Google Play\n" +
-                           "• Todas las características se activan inmediatamente",
+                    text = stringResource(R.string.premium_info_bullets),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
@@ -345,20 +348,20 @@ private fun PremiumHeader() {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "👑",
+                text = "\uD83D\uDC51",
                 fontSize = 32.sp
             )
         }
-        
+
         Text(
-            text = "Desbloquea WisdomSpark Premium",
+            text = stringResource(R.string.premium_unlock_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
-        
+
         Text(
-            text = "Disfruta de una experiencia completa sin límites",
+            text = stringResource(R.string.premium_unlock_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -372,12 +375,12 @@ private fun PremiumFeaturesGrid(
     isUnlocked: Boolean
 ) {
     Text(
-        text = if (isUnlocked) "Tus características Premium" else "Características Premium",
+        text = if (isUnlocked) stringResource(R.string.premium_your_features) else stringResource(R.string.premium_features_title),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(vertical = 8.dp)
     )
-    
+
     features.chunked(2).forEach { rowFeatures ->
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -390,7 +393,7 @@ private fun PremiumFeaturesGrid(
                     modifier = Modifier.weight(1f)
                 )
             }
-            
+
             // Relleno si la fila no está completa
             if (rowFeatures.size == 1) {
                 Spacer(modifier = Modifier.weight(1f))
@@ -409,9 +412,9 @@ private fun PremiumFeatureCard(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isUnlocked) 
+            containerColor = if (isUnlocked)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else 
+            else
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -425,43 +428,43 @@ private fun PremiumFeatureCard(
                 text = feature.icon,
                 fontSize = 24.sp
             )
-            
+
             Text(
                 text = when (feature) {
-                    PremiumFeature.AD_FREE -> "Sin Anuncios"
-                    PremiumFeature.PREMIUM_THEMES -> "Temas Premium"
-                    PremiumFeature.UNLIMITED_FAVORITES -> "Favoritos Ilimitados"
-                    PremiumFeature.ADVANCED_CATEGORIES -> "Categorías Avanzadas"
-                    PremiumFeature.QUOTE_SHARING_STYLES -> "Estilos de Compartir"
-                    PremiumFeature.OFFLINE_MODE -> "Modo Offline"
-                    PremiumFeature.DAILY_QUOTES_CUSTOMIZATION -> "Personalización Diaria"
-                    PremiumFeature.PRIORITY_SUPPORT -> "Soporte Prioritario"
+                    PremiumFeature.AD_FREE -> stringResource(R.string.premium_feature_ad_free)
+                    PremiumFeature.PREMIUM_THEMES -> stringResource(R.string.premium_feature_themes)
+                    PremiumFeature.UNLIMITED_FAVORITES -> stringResource(R.string.premium_feature_unlimited_favorites)
+                    PremiumFeature.ADVANCED_CATEGORIES -> stringResource(R.string.premium_feature_advanced_categories)
+                    PremiumFeature.QUOTE_SHARING_STYLES -> stringResource(R.string.premium_feature_sharing_styles)
+                    PremiumFeature.OFFLINE_MODE -> stringResource(R.string.premium_feature_offline)
+                    PremiumFeature.DAILY_QUOTES_CUSTOMIZATION -> stringResource(R.string.premium_feature_daily_customization)
+                    PremiumFeature.PRIORITY_SUPPORT -> stringResource(R.string.premium_feature_priority_support)
                 },
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
-            
+
             Text(
                 text = when (feature) {
-                    PremiumFeature.AD_FREE -> "Sin interrupciones"
-                    PremiumFeature.PREMIUM_THEMES -> "Temas exclusivos"
-                    PremiumFeature.UNLIMITED_FAVORITES -> "Sin límites"
-                    PremiumFeature.ADVANCED_CATEGORIES -> "Contenido especializado"
-                    PremiumFeature.QUOTE_SHARING_STYLES -> "Diseños únicos"
-                    PremiumFeature.OFFLINE_MODE -> "Acceso sin conexión"
-                    PremiumFeature.DAILY_QUOTES_CUSTOMIZATION -> "Control total"
-                    PremiumFeature.PRIORITY_SUPPORT -> "Asistencia rápida"
+                    PremiumFeature.AD_FREE -> stringResource(R.string.premium_desc_ad_free)
+                    PremiumFeature.PREMIUM_THEMES -> stringResource(R.string.premium_desc_themes)
+                    PremiumFeature.UNLIMITED_FAVORITES -> stringResource(R.string.premium_desc_favorites)
+                    PremiumFeature.ADVANCED_CATEGORIES -> stringResource(R.string.premium_desc_categories)
+                    PremiumFeature.QUOTE_SHARING_STYLES -> stringResource(R.string.premium_desc_sharing)
+                    PremiumFeature.OFFLINE_MODE -> stringResource(R.string.premium_desc_offline)
+                    PremiumFeature.DAILY_QUOTES_CUSTOMIZATION -> stringResource(R.string.premium_desc_daily)
+                    PremiumFeature.PRIORITY_SUPPORT -> stringResource(R.string.premium_desc_support)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
+
             if (isUnlocked) {
                 Icon(
                     Icons.Default.CheckCircle,
-                    contentDescription = "Desbloqueado",
+                    contentDescription = stringResource(R.string.premium_unlocked),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(16.dp)
                 )
@@ -508,12 +511,12 @@ private fun SubscriptionPlanCard(
             ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (plan.isPopular) 
+            containerColor = if (plan.isPopular)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else 
+            else
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         ),
-        border = if (plan.isPopular) 
+        border = if (plan.isPopular)
             androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
         else null,
         elevation = CardDefaults.cardElevation(
@@ -533,24 +536,24 @@ private fun SubscriptionPlanCard(
                 Column {
                     Text(
                         text = when (plan) {
-                            SubscriptionPlan.MONTHLY -> "Plan Mensual"
-                            SubscriptionPlan.YEARLY -> "Plan Anual"
-                            SubscriptionPlan.LIFETIME -> "De por vida"
+                            SubscriptionPlan.MONTHLY -> stringResource(R.string.premium_plan_monthly_title)
+                            SubscriptionPlan.YEARLY -> stringResource(R.string.premium_plan_yearly_title)
+                            SubscriptionPlan.LIFETIME -> stringResource(R.string.premium_plan_lifetime_title)
                         },
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-                    
+
                     if (plan.isPopular) {
                         Text(
-                            text = "🔥 Más popular",
+                            text = stringResource(R.string.premium_popular_badge),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
-                
+
                 Text(
                     text = formattedPrice,
                     style = MaterialTheme.typography.headlineSmall,
@@ -558,27 +561,27 @@ private fun SubscriptionPlanCard(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            
+
             // Descripción
             Text(
                 text = when (plan) {
-                    SubscriptionPlan.MONTHLY -> "Facturación mensual, cancela cuando quieras"
-                    SubscriptionPlan.YEARLY -> "Ahorra con facturación anual"
-                    SubscriptionPlan.LIFETIME -> "Pago único, acceso de por vida"
+                    SubscriptionPlan.MONTHLY -> stringResource(R.string.subscription_monthly_desc)
+                    SubscriptionPlan.YEARLY -> stringResource(R.string.subscription_yearly_desc)
+                    SubscriptionPlan.LIFETIME -> stringResource(R.string.subscription_lifetime_desc)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
+
             // Botón de compra
             Button(
                 onClick = { onPlanSelected(plan) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = canPurchase && !isLoading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (plan.isPopular) 
+                    containerColor = if (plan.isPopular)
                         MaterialTheme.colorScheme.primary
-                    else 
+                    else
                         MaterialTheme.colorScheme.secondary
                 )
             ) {
@@ -590,9 +593,9 @@ private fun SubscriptionPlanCard(
                 } else {
                     Text(
                         text = when (plan) {
-                            SubscriptionPlan.MONTHLY -> "Suscribirse mensualmente"
-                            SubscriptionPlan.YEARLY -> "Suscribirse anualmente"
-                            SubscriptionPlan.LIFETIME -> "Comprar de por vida"
+                            SubscriptionPlan.MONTHLY -> stringResource(R.string.premium_subscribe_monthly)
+                            SubscriptionPlan.YEARLY -> stringResource(R.string.premium_subscribe_yearly)
+                            SubscriptionPlan.LIFETIME -> stringResource(R.string.premium_buy_lifetime)
                         },
                         fontWeight = FontWeight.Bold
                     )
@@ -610,11 +613,17 @@ private fun PurchaseConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val planName = when (plan) {
+        SubscriptionPlan.MONTHLY -> stringResource(R.string.subscription_monthly)
+        SubscriptionPlan.YEARLY -> stringResource(R.string.subscription_yearly)
+        SubscriptionPlan.LIFETIME -> stringResource(R.string.subscription_lifetime)
+    }
+
     AlertDialog(
         onDismissRequest = { if (purchaseState !is PurchaseState.Loading) onDismiss() },
         title = {
             Text(
-                text = "Confirmar compra",
+                text = stringResource(R.string.premium_confirm_title),
                 fontWeight = FontWeight.Bold
             )
         },
@@ -623,23 +632,19 @@ private fun PurchaseConfirmationDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "¿Deseas suscribirte a WisdomSpark Premium?"
+                    text = stringResource(R.string.premium_confirm_body)
                 )
-                
+
                 Text(
-                    text = "Plan: ${when (plan) {
-                        SubscriptionPlan.MONTHLY -> "Mensual"
-                        SubscriptionPlan.YEARLY -> "Anual"
-                        SubscriptionPlan.LIFETIME -> "De por vida"
-                    }}",
+                    text = stringResource(R.string.premium_plan_with_label, planName),
                     fontWeight = FontWeight.Medium
                 )
-                
+
                 Text(
-                    text = "Precio: $formattedPrice",
+                    text = stringResource(R.string.premium_price_label, formattedPrice),
                     fontWeight = FontWeight.Medium
                 )
-                
+
                 when (purchaseState) {
                     is PurchaseState.Loading -> {
                         Row(
@@ -647,12 +652,12 @@ private fun PurchaseConfirmationDialog(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp))
-                            Text("Procesando compra...")
+                            Text(stringResource(R.string.premium_processing))
                         }
                     }
                     is PurchaseState.Error -> {
                         Text(
-                            text = "Error: ${purchaseState.message}",
+                            text = stringResource(R.string.premium_error_prefix, purchaseState.message),
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -665,7 +670,7 @@ private fun PurchaseConfirmationDialog(
                 onClick = onConfirm,
                 enabled = purchaseState !is PurchaseState.Loading
             ) {
-                Text("Confirmar")
+                Text(stringResource(R.string.premium_confirm_button))
             }
         },
         dismissButton = {
@@ -673,7 +678,7 @@ private fun PurchaseConfirmationDialog(
                 onClick = onDismiss,
                 enabled = purchaseState !is PurchaseState.Loading
             ) {
-                Text("Cancelar")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

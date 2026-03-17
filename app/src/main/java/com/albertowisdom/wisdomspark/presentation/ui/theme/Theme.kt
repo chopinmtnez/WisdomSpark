@@ -41,7 +41,7 @@ private val LightColorScheme = lightColorScheme(
     background = WisdomPearl,                 // Fondo principal
     onBackground = WisdomCharcoal,            // Texto sobre fondo
 
-    surface = Color.White,                    // Superficies
+    surface = WisdomCream,                     // Superficies (crema cálido, integrado con el fondo)
     onSurface = WisdomCharcoal,               // Texto sobre superficies
     surfaceVariant = WisdomBeige,             // Variante de superficie
     onSurfaceVariant = WisdomTaupe,           // Texto sobre variante
@@ -52,7 +52,7 @@ private val LightColorScheme = lightColorScheme(
 
 // **DARK COLOR SCHEME - PREMIUM**
 private val DarkColorScheme = darkColorScheme(
-    primary = WisdomGold,                     // Dorado premium (mismo en dark)
+    primary = WisdomGoldDark,                  // Dorado premium más brillante para dark mode
     onPrimary = WisdomCharcoal,               // Texto sobre dorado
     primaryContainer = WisdomDarkSecondary,   // Contenedores principales dark
     onPrimaryContainer = WisdomDarkAccent,    // Texto en contenedores

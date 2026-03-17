@@ -180,6 +180,78 @@
     <string name="accessibility_not_favorited">No está en favoritos.</string>
     <string name="accessibility_category_with_quotes">Categoría %1$s con %2$d citas disponibles</string>
 
+    <!-- Favorites Limit -->
+    <string name="favorites_limit_title">Has alcanzado el límite</string>
+    <string name="favorites_limit_message">Los usuarios gratuitos pueden guardar hasta %d favoritos. Hazte Premium para guardar citas ilimitadas.</string>
+    <string name="favorites_go_premium">Hazte Premium</string>
+    <string name="favorites_limit_dismiss">Más tarde</string>
+
+    <!-- Premium Screen -->
+    <string name="premium_screen_title">✨ WisdomSpark Premium</string>
+    <string name="premium_active_title">¡WisdomSpark Premium Activo!</string>
+    <string name="premium_active_subtitle">Disfruta de todas las características Premium</string>
+    <string name="premium_subscription_details">Detalles de tu suscripción</string>
+    <string name="premium_plan_label">Plan:</string>
+    <string name="premium_purchase_date">Fecha de compra:</string>
+    <string name="premium_auto_renewal">Renovación automática:</string>
+    <string name="premium_auto_renewal_active">Activa</string>
+    <string name="premium_auto_renewal_inactive">Inactiva</string>
+    <string name="premium_refresh_subscription">Actualizar estado de suscripción</string>
+    <string name="premium_choose_plan">Elige tu plan</string>
+    <string name="premium_important_info">💡 Información importante</string>
+    <string name="premium_info_bullets">• Cancela en cualquier momento desde Google Play Store\n• Las suscripciones se renuevan automáticamente\n• Política de reembolso según términos de Google Play\n• Todas las características se activan inmediatamente</string>
+    <string name="premium_unlock_title">Desbloquea WisdomSpark Premium</string>
+    <string name="premium_unlock_subtitle">Disfruta de una experiencia completa sin límites</string>
+    <string name="premium_your_features">Tus características Premium</string>
+    <string name="premium_features_title">Características Premium</string>
+    <string name="premium_desc_ad_free">Sin interrupciones</string>
+    <string name="premium_desc_themes">Temas exclusivos</string>
+    <string name="premium_desc_favorites">Sin límites</string>
+    <string name="premium_desc_categories">Contenido especializado</string>
+    <string name="premium_desc_sharing">Diseños únicos</string>
+    <string name="premium_desc_offline">Acceso sin conexión</string>
+    <string name="premium_desc_daily">Control total</string>
+    <string name="premium_desc_support">Asistencia rápida</string>
+    <string name="premium_unlocked">Desbloqueado</string>
+    <string name="premium_plan_monthly_title">Plan Mensual</string>
+    <string name="premium_plan_yearly_title">Plan Anual</string>
+    <string name="premium_plan_lifetime_title">De por vida</string>
+    <string name="premium_popular_badge">🔥 Más popular</string>
+    <string name="premium_subscribe_monthly">Suscribirse mensualmente</string>
+    <string name="premium_subscribe_yearly">Suscribirse anualmente</string>
+    <string name="premium_buy_lifetime">Comprar de por vida</string>
+    <string name="premium_confirm_title">Confirmar compra</string>
+    <string name="premium_confirm_body">¿Deseas suscribirte a WisdomSpark Premium?</string>
+    <string name="premium_plan_with_label">Plan: %1$s</string>
+    <string name="premium_price_label">Precio: %1$s</string>
+    <string name="premium_processing">Procesando compra…</string>
+    <string name="premium_error_prefix">Error: %1$s</string>
+    <string name="premium_confirm_button">Confirmar</string>
+
+    <!-- Share Bottom Sheet -->
+    <string name="share_wisdom_title">Compartir Sabiduría</string>
+    <string name="share_wisdom_subtitle">Elige cómo quieres compartir esta inspiración</string>
+    <string name="share_main_options">Opciones Principales</string>
+    <string name="share_option_text">Texto</string>
+    <string name="share_option_text_desc">Como mensaje</string>
+    <string name="share_option_image">Imagen</string>
+    <string name="share_option_image_desc">Tarjeta visual</string>
+    <string name="share_option_story">Story</string>
+    <string name="share_option_story_desc">Para Instagram</string>
+    <string name="share_social_networks">Redes Sociales</string>
+    <string name="share_option_tiktok_desc">Diseño viral</string>
+    <string name="share_option_linkedin_desc">Profesional</string>
+    <string name="share_option_whatsapp_desc">Directo</string>
+
+    <!-- Rewarded Ads -->
+    <string name="rewarded_watch_ad">Ver anuncio</string>
+    <string name="rewarded_watch_to_save">Mira un anuncio para guardar este favorito</string>
+    <string name="rewarded_ad_loading">Cargando anuncio…</string>
+    <string name="rewarded_ad_not_available">Anuncio no disponible. Inténtalo más tarde.</string>
+    <string name="rewarded_favorite_saved">¡Favorito guardado! Gracias por ver el anuncio.</string>
+    <string name="rewarded_watch_for_new_quote">Ver anuncio para otra cita</string>
+    <string name="rewarded_new_quote_unlocked">¡Nueva cita desbloqueada!</string>
+
     <string name="error_generating_quotes">No pudimos cargar nuevas citas. Verifica tu conexión e intenta de nuevo.</string>
     <string name="error_syncing_categories">Sincronizando datos para el idioma seleccionado…</string>
     <string name="error_loading_categories">Error al cargar categorías. Reinicia la app.</string>

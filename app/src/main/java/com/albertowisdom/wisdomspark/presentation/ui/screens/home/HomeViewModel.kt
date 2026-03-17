@@ -10,12 +10,15 @@ import com.albertowisdom.wisdomspark.data.models.Quote
 import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
 import com.albertowisdom.wisdomspark.data.repository.QuoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,10 +35,15 @@ class HomeViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "HomeViewModel"
+        private const val FREE_FAVORITES_LIMIT = 10
     }
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    // Evento one-shot: el usuario alcanzó el límite de favoritos
+    private val _favoritesLimitReached = MutableSharedFlow<Int>()
+    val favoritesLimitReached: SharedFlow<Int> = _favoritesLimitReached.asSharedFlow()
 
     // Contador de interacciones para interstitials
     private var userInteractions = 0
@@ -106,13 +114,23 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Toggle favorito con lógica de interstitial
+     * Toggle favorito con lógica de interstitial y límite para free users
      */
     fun toggleFavorite() {
         val currentQuote = _uiState.value.todayQuote ?: return
 
         viewModelScope.launch {
             try {
+                // Si va a AÑADIR a favoritos (no quitar), verificar límite
+                if (!currentQuote.isFavorite && !adMobManager.isPremium()) {
+                    val currentCount = quoteRepository.getFavoriteCount()
+                    if (currentCount >= FREE_FAVORITES_LIMIT) {
+                        Log.d(TAG, "Favorites limit reached: $currentCount/$FREE_FAVORITES_LIMIT")
+                        _favoritesLimitReached.emit(FREE_FAVORITES_LIMIT)
+                        return@launch
+                    }
+                }
+
                 val updatedQuote = currentQuote.copy(isFavorite = !currentQuote.isFavorite)
                 quoteRepository.updateQuote(updatedQuote)
 
@@ -122,10 +140,56 @@ class HomeViewModel @Inject constructor(
                 incrementUserInteraction()
 
             } catch (e: Exception) {
-                // Manejar error silenciosamente o mostrar snackbar
+                Log.e(TAG, "Error toggling favorite", e)
             }
         }
     }
+
+    /**
+     * Guardar favorito tras completar rewarded ad (sin verificar límite).
+     * Se llama solo después de que el usuario haya visto el anuncio completo.
+     */
+    fun forceSaveFavorite() {
+        val currentQuote = _uiState.value.todayQuote ?: return
+
+        viewModelScope.launch {
+            try {
+                if (!currentQuote.isFavorite) {
+                    val updatedQuote = currentQuote.copy(isFavorite = true)
+                    quoteRepository.updateQuote(updatedQuote)
+                    _uiState.value = _uiState.value.copy(todayQuote = updatedQuote)
+                    Log.d(TAG, "Favorite saved via rewarded ad")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving favorite after reward", e)
+            }
+        }
+    }
+
+    /**
+     * Cargar una cita aleatoria diferente a la actual (tras rewarded ad)
+     */
+    fun loadRandomQuote() {
+        viewModelScope.launch {
+            try {
+                val language = userPreferences.appLanguage.first()
+                val currentQuoteId = _uiState.value.todayQuote?.id ?: -1
+                val excludeIds = if (currentQuoteId > 0) listOf(currentQuoteId) else emptyList()
+                val randomQuote = quoteRepository.getRandomQuoteExcluding(excludeIds, language)
+                if (randomQuote != null) {
+                    _uiState.value = _uiState.value.copy(todayQuote = randomQuote)
+                    Log.d(TAG, "Random quote loaded via rewarded ad")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading random quote", e)
+            }
+        }
+    }
+
+    /**
+     * Verificar si hay un rewarded ad disponible
+     */
+    fun hasRewardedAd(): Boolean = adMobManager.hasRewardedAd()
 
     /**
      * Compartir cita con tracking de interacciones

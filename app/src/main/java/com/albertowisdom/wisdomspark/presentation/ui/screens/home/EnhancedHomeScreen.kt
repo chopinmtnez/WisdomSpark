@@ -30,6 +30,7 @@ import com.albertowisdom.wisdomspark.data.preferences.UserPreferences
 import com.albertowisdom.wisdomspark.presentation.ui.screens.home.HomeScreen
 import com.albertowisdom.wisdomspark.presentation.ui.screens.home.SwipeableHomeScreen
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
+import android.widget.Toast
 import kotlinx.coroutines.launch
 
 /**
@@ -42,11 +43,24 @@ fun EnhancedHomeScreen(
     userPreferences: UserPreferences,
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToPremium: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-    
+
+    // Estado para diálogo de límite de favoritos
+    var showFavoritesLimitDialog by remember { mutableStateOf(false) }
+    var favoritesLimit by remember { mutableIntStateOf(10) }
+
+    // Observar evento de límite de favoritos alcanzado (compartido por HomeScreen y SwipeableHomeScreen)
+    LaunchedEffect(Unit) {
+        viewModel.favoritesLimitReached.collect { limit ->
+            favoritesLimit = limit
+            showFavoritesLimitDialog = true
+        }
+    }
+
     // Estado del modo swipeable
     val isSwipeableMode by userPreferences.isSwipeableModeEnabled.collectAsState(initial = false)
     val isHapticEnabled by userPreferences.isHapticFeedbackEnabled.collectAsState(initial = true)
@@ -144,6 +158,91 @@ fun EnhancedHomeScreen(
                 .align(Alignment.TopStart)
                 .padding(top = 80.dp, start = 16.dp)
         )
+
+        // Diálogo de límite de favoritos alcanzado (con opción de rewarded ad)
+        if (showFavoritesLimitDialog) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val hasRewarded = viewModel.hasRewardedAd()
+
+            AlertDialog(
+                onDismissRequest = { showFavoritesLimitDialog = false },
+                title = {
+                    Text(
+                        text = "⭐ " + stringResource(R.string.favorites_limit_title),
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.favorites_limit_message, favoritesLimit),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        if (hasRewarded) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.rewarded_watch_to_save),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showFavoritesLimitDialog = false
+                            onNavigateToPremium()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(stringResource(R.string.favorites_go_premium))
+                    }
+                },
+                dismissButton = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { showFavoritesLimitDialog = false }) {
+                            Text(stringResource(R.string.favorites_limit_dismiss))
+                        }
+                        if (hasRewarded) {
+                            OutlinedButton(
+                                onClick = {
+                                    showFavoritesLimitDialog = false
+                                    val activity = context as? android.app.Activity
+                                    if (activity != null) {
+                                        adMobManager.showRewardedAd(
+                                            activity = activity,
+                                            onRewarded = {
+                                                viewModel.forceSaveFavorite()
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.rewarded_favorite_saved),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            },
+                                            onFailed = {
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.rewarded_ad_not_available),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        )
+                                    }
+                                }
+                            ) {
+                                Text("🎬 " + stringResource(R.string.rewarded_watch_ad))
+                            }
+                        }
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -161,7 +260,7 @@ private fun ModeToggleButton(
     )
     
     val contentColor by animateColorAsState(
-        targetValue = if (isSwipeableMode) Color.White else MaterialTheme.colorScheme.onSurface,
+        targetValue = if (isSwipeableMode) WisdomCharcoal else MaterialTheme.colorScheme.onSurface,
         animationSpec = tween(300),
         label = "contentColor"
     )

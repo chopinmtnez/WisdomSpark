@@ -19,12 +19,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.albertowisdom.wisdomspark.R
 import com.albertowisdom.wisdomspark.ads.AdMobManager
 import com.albertowisdom.wisdomspark.ads.BannerAdView
 import com.albertowisdom.wisdomspark.presentation.ui.components.QuoteCard
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
 import com.albertowisdom.wisdomspark.utils.ShareUtils
 import com.albertowisdom.wisdomspark.utils.DateUtils
+import android.widget.Toast
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.stringResource
 
 /**
  * Pantalla principal de WisdomSpark con integración AdMob
@@ -117,6 +121,43 @@ fun HomeScreen(
                             },
                             userPreferences = userPreferences
                         )
+
+                        // Botón "Ver anuncio para otra cita" (solo free users)
+                        if (adMobManager.shouldShowAds() && viewModel.hasRewardedAd()) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            OutlinedButton(
+                                onClick = {
+                                    val activity = context as? android.app.Activity
+                                    if (activity != null) {
+                                        adMobManager.showRewardedAd(
+                                            activity = activity,
+                                            onRewarded = {
+                                                viewModel.loadRandomQuote()
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.rewarded_new_quote_unlocked),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            },
+                                            onFailed = {
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.rewarded_ad_not_available),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        )
+                                    }
+                                },
+                                shape = RoundedCornerShape(24.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "🎬 " + stringResource(R.string.rewarded_watch_for_new_quote),
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                        }
                     }
 
                     else -> {
@@ -134,8 +175,8 @@ fun HomeScreen(
             if (adMobManager.shouldShowAds()) {
                 BannerAdView(
                     onAdLoaded = { adMobManager.onBannerAdLoaded() },
-                    onAdFailedToLoad = { error -> 
-                        adMobManager.onBannerAdFailedToLoad(error) 
+                    onAdFailedToLoad = { error ->
+                        adMobManager.onBannerAdFailedToLoad(error)
                     },
                     modifier = Modifier.fillMaxWidth()
                 )

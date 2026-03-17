@@ -14,6 +14,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import com.albertowisdom.wisdomspark.R
 import com.albertowisdom.wisdomspark.data.models.Quote
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
 import com.albertowisdom.wisdomspark.utils.ShareUtils
@@ -101,19 +106,19 @@ private fun ShareBottomSheetContent(
         
         // Título
         Text(
-            text = "Compartir Sabiduría",
+            text = stringResource(R.string.share_wisdom_title),
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary
             ),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         // Subtítulo
         Text(
-            text = "Elige cómo quieres compartir esta inspiración",
+            text = stringResource(R.string.share_wisdom_subtitle),
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
             ),
@@ -139,7 +144,8 @@ private fun ShareBottomSheetContent(
                         color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 20.sp
                     ),
-                    maxLines = 3
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -158,54 +164,54 @@ private fun ShareBottomSheetContent(
         
         // Opciones principales
         Text(
-            text = "Opciones Principales",
+            text = stringResource(R.string.share_main_options),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
         )
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             ShareOptionButton(
                 emoji = "📝",
-                label = "Texto",
-                description = "Como mensaje",
+                label = stringResource(R.string.share_option_text),
+                description = stringResource(R.string.share_option_text_desc),
                 onClick = { onOptionSelected(ShareOption.TEXT) }
             )
-            
+
             ShareOptionButton(
                 emoji = "🖼️",
-                label = "Imagen",
-                description = "Tarjeta visual",
+                label = stringResource(R.string.share_option_image),
+                description = stringResource(R.string.share_option_image_desc),
                 onClick = { onOptionSelected(ShareOption.IMAGE) }
             )
-            
+
             ShareOptionButton(
                 emoji = "📸",
-                label = "Story",
-                description = "Para Instagram",
+                label = stringResource(R.string.share_option_story),
+                description = stringResource(R.string.share_option_story_desc),
                 onClick = { onOptionSelected(ShareOption.INSTAGRAM_STORY) }
             )
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Redes sociales específicas
         Text(
-            text = "Redes Sociales",
+            text = stringResource(R.string.share_social_networks),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
         )
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -213,21 +219,21 @@ private fun ShareBottomSheetContent(
             ShareOptionButton(
                 emoji = "🎵",
                 label = "TikTok",
-                description = "Diseño viral",
+                description = stringResource(R.string.share_option_tiktok_desc),
                 onClick = { onOptionSelected(ShareOption.TIKTOK) }
             )
-            
+
             ShareOptionButton(
                 emoji = "💼",
                 label = "LinkedIn",
-                description = "Profesional",
+                description = stringResource(R.string.share_option_linkedin_desc),
                 onClick = { onOptionSelected(ShareOption.LINKEDIN) }
             )
-            
+
             ShareOptionButton(
                 emoji = "💬",
                 label = "WhatsApp",
-                description = "Directo",
+                description = stringResource(R.string.share_option_whatsapp_desc),
                 onClick = { onOptionSelected(ShareOption.WHATSAPP) }
             )
         }
@@ -243,9 +249,11 @@ private fun ShareOptionButton(
     description: String,
     onClick: () -> Unit
 ) {
+    val accessibilityLabel = "$label: $description"
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
+            .semantics { contentDescription = accessibilityLabel }
             .clickable { onClick() }
             .padding(8.dp)
     ) {

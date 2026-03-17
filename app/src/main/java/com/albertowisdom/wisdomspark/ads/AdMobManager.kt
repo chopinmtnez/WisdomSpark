@@ -6,6 +6,8 @@ import android.util.Log
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.albertowisdom.wisdomspark.BuildConfig
 import com.albertowisdom.wisdomspark.premium.billing.BillingManager
 import kotlinx.coroutines.CoroutineScope
@@ -27,15 +29,20 @@ class AdMobManager @Inject constructor(
     companion object {
         val BANNER_AD_UNIT_ID: String get() = BuildConfig.ADMOB_BANNER_ID
         val INTERSTITIAL_AD_UNIT_ID: String get() = BuildConfig.ADMOB_INTERSTITIAL_ID
+        val REWARDED_AD_UNIT_ID: String get() = BuildConfig.ADMOB_REWARDED_ID
 
-        const val INTERSTITIAL_FREQUENCY = 3
+        const val INTERSTITIAL_FREQUENCY = 2
+        private const val INTERSTITIAL_COOLDOWN_MS = 30_000L
     }
 
     private var isInitialized = false
     private var interstitialAd: InterstitialAd? = null
+    private var rewardedAd: RewardedAd? = null
+    private var isLoadingRewarded = false
     private var interactionCount = 0
+    private var lastInterstitialShownAt = 0L
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    
+
     // Estado premium se obtiene del BillingManager
     private var isPremiumUser = false
 
@@ -70,6 +77,7 @@ class AdMobManager @Inject constructor(
                 // Solo precargar si no es Premium
                 if (!isPremiumUser) {
                     loadInterstitialAd(context)
+                    loadRewardedAd(context)
                 }
             }
         } catch (e: Exception) {
@@ -132,21 +140,105 @@ class AdMobManager @Inject constructor(
         if (isPremiumUser) return
 
         interactionCount++
-        
+
+        val now = System.currentTimeMillis()
+        val cooldownOk = (now - lastInterstitialShownAt) >= INTERSTITIAL_COOLDOWN_MS
         val shouldShow = force || (interactionCount % INTERSTITIAL_FREQUENCY == 0)
-        
-        if (shouldShow && interstitialAd != null) {
+
+        if (shouldShow && cooldownOk && interstitialAd != null) {
             try {
                 interstitialAd?.show(activity)
-                Log.d("AdMob", "📱 Interstitial mostrado")
+                lastInterstitialShownAt = now
+                Log.d("AdMob", "Interstitial mostrado (interaccion #$interactionCount)")
             } catch (e: Exception) {
-                Log.e("AdMob", "❌ Error mostrando interstitial: ${e.message}")
-                // Intentar recargar el anuncio
+                Log.e("AdMob", "Error mostrando interstitial: ${e.message}")
                 loadInterstitialAd(activity)
             }
+        } else if (shouldShow && !cooldownOk) {
+            Log.d("AdMob", "Interstitial en cooldown, se omite")
         } else if (shouldShow) {
-            Log.d("AdMob", "⚠️ Interstitial no disponible, precargando...")
+            Log.d("AdMob", "Interstitial no disponible, precargando...")
             loadInterstitialAd(activity)
+        }
+    }
+
+    // ========== REWARDED ADS ==========
+
+    /**
+     * Cargar anuncio con recompensa
+     */
+    private fun loadRewardedAd(context: Context) {
+        if (isPremiumUser || isLoadingRewarded) return
+
+        isLoadingRewarded = true
+        val adRequest = AdRequest.Builder().build()
+        RewardedAd.load(
+            context,
+            REWARDED_AD_UNIT_ID,
+            adRequest,
+            object : RewardedAdLoadCallback() {
+                override fun onAdLoaded(ad: RewardedAd) {
+                    rewardedAd = ad
+                    isLoadingRewarded = false
+                    Log.d("AdMob", "✅ Rewarded ad cargado")
+                }
+
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    rewardedAd = null
+                    isLoadingRewarded = false
+                    Log.e("AdMob", "❌ Error cargando rewarded: ${error.message}")
+                }
+            }
+        )
+    }
+
+    /**
+     * Verificar si hay un rewarded ad listo para mostrar
+     */
+    fun hasRewardedAd(): Boolean = rewardedAd != null
+
+    /**
+     * Mostrar anuncio con recompensa.
+     * @param activity Activity para mostrar el ad
+     * @param onRewarded Callback que se ejecuta cuando el usuario completa el visionado
+     * @param onFailed Callback si el ad no se pudo mostrar
+     */
+    fun showRewardedAd(
+        activity: Activity,
+        onRewarded: () -> Unit,
+        onFailed: () -> Unit = {}
+    ) {
+        val ad = rewardedAd
+        if (ad == null) {
+            Log.d("AdMob", "Rewarded ad no disponible")
+            onFailed()
+            // Intentar precargar para la próxima vez
+            loadRewardedAd(activity)
+            return
+        }
+
+        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() {
+                rewardedAd = null
+                // Precargar siguiente rewarded ad
+                loadRewardedAd(activity)
+            }
+
+            override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                rewardedAd = null
+                Log.e("AdMob", "❌ Error mostrando rewarded: ${error.message}")
+                onFailed()
+                loadRewardedAd(activity)
+            }
+
+            override fun onAdShowedFullScreenContent() {
+                Log.d("AdMob", "📱 Rewarded ad mostrado")
+            }
+        }
+
+        ad.show(activity) { rewardItem ->
+            Log.d("AdMob", "🎁 Recompensa obtenida: ${rewardItem.amount} ${rewardItem.type}")
+            onRewarded()
         }
     }
 
@@ -181,7 +273,8 @@ class AdMobManager @Inject constructor(
             isInitialized = isInitialized,
             isPremium = isPremiumUser,
             interactionCount = interactionCount,
-            hasInterstitialLoaded = interstitialAd != null
+            hasInterstitialLoaded = interstitialAd != null,
+            hasRewardedLoaded = rewardedAd != null
         )
     }
 }
@@ -193,5 +286,6 @@ data class AdMobStats(
     val isInitialized: Boolean,
     val isPremium: Boolean,
     val interactionCount: Int,
-    val hasInterstitialLoaded: Boolean
+    val hasInterstitialLoaded: Boolean,
+    val hasRewardedLoaded: Boolean = false
 )

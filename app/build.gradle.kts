@@ -24,6 +24,7 @@ android {
         buildConfigField("String", "SHEETS_SPREADSHEET_ID", "\"${project.findProperty("sheetsSpreadsheetId") ?: ""}\"")
         buildConfigField("String", "ADMOB_BANNER_ID", "\"${project.findProperty("admobBannerId") ?: "ca-app-pub-3940256099942544/6300978111"}\"")
         buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"${project.findProperty("admobInterstitialId") ?: "ca-app-pub-3940256099942544/1033173712"}\"")
+        buildConfigField("String", "ADMOB_REWARDED_ID", "\"${project.findProperty("admobRewardedId") ?: "ca-app-pub-3940256099942544/5224354917"}\"")
     }
 
     signingConfigs {

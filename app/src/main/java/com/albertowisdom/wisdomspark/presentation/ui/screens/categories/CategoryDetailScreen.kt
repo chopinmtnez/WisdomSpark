@@ -27,6 +27,7 @@ import com.albertowisdom.wisdomspark.presentation.ui.components.QuoteCard
 import com.albertowisdom.wisdomspark.presentation.ui.components.ShareBottomSheet
 import com.albertowisdom.wisdomspark.presentation.ui.theme.*
 import com.albertowisdom.wisdomspark.utils.getCategoryEmoji
+import android.widget.Toast
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -39,15 +40,27 @@ fun CategoryDetailScreen(
     categoryName: String,
     adMobManager: AdMobManager,
     onNavigateBack: () -> Unit,
+    onNavigateToPremium: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val viewModel: CategoryDetailViewModel = hiltViewModel()
-    
+
     // Estados para las nuevas funcionalidades
     var showShareBottomSheet by remember { mutableStateOf(false) }
-    
+    var showFavoritesLimitDialog by remember { mutableStateOf(false) }
+    var favoritesLimit by remember { mutableIntStateOf(10) }
+    var pendingFavoriteQuote by remember { mutableStateOf<Quote?>(null) }
+
+    // Observar evento de límite de favoritos alcanzado
+    LaunchedEffect(Unit) {
+        viewModel.favoritesLimitReached.collect { limit ->
+            favoritesLimit = limit
+            showFavoritesLimitDialog = true
+        }
+    }
+
     // Observar las citas de esta categoría (con filtrado por idioma automático)
     val quotes by viewModel.getQuotesByCategory(categoryName).collectAsState(initial = emptyList())
     var selectedQuoteForShare by remember { mutableStateOf<Quote?>(null) }
@@ -152,8 +165,13 @@ fun CategoryDetailScreen(
                             // Smart favorites: marca como favorito con animación y guarda en BD
                             scope.launch {
                                 try {
-                                    viewModel.toggleFavoriteQuote(quote)
-                                    showFavoriteAnimation = quote.id
+                                    val success = viewModel.toggleFavoriteQuote(quote)
+                                    if (success) {
+                                        showFavoriteAnimation = quote.id
+                                    } else {
+                                        // Guardar referencia para rewarded ad
+                                        pendingFavoriteQuote = quote
+                                    }
                                 } catch (e: Exception) {
                                     // Error al guardar en BD
                                 }
@@ -203,6 +221,94 @@ fun CategoryDetailScreen(
                 delay(1000) // Duración de la animación
                 showFavoriteAnimation = null
             }
+        }
+
+        // Diálogo de límite de favoritos alcanzado (con opción de rewarded ad)
+        if (showFavoritesLimitDialog) {
+            val hasRewarded = viewModel.hasRewardedAd()
+
+            AlertDialog(
+                onDismissRequest = { showFavoritesLimitDialog = false },
+                title = {
+                    Text(
+                        text = "⭐ " + stringResource(R.string.favorites_limit_title),
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.favorites_limit_message, favoritesLimit),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        if (hasRewarded) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.rewarded_watch_to_save),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showFavoritesLimitDialog = false
+                            onNavigateToPremium()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(stringResource(R.string.favorites_go_premium))
+                    }
+                },
+                dismissButton = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { showFavoritesLimitDialog = false }) {
+                            Text(stringResource(R.string.favorites_limit_dismiss))
+                        }
+                        if (hasRewarded && pendingFavoriteQuote != null) {
+                            OutlinedButton(
+                                onClick = {
+                                    showFavoritesLimitDialog = false
+                                    val activity = context as? android.app.Activity
+                                    val quoteToSave = pendingFavoriteQuote
+                                    if (activity != null && quoteToSave != null) {
+                                        adMobManager.showRewardedAd(
+                                            activity = activity,
+                                            onRewarded = {
+                                                scope.launch {
+                                                    viewModel.forceSaveFavoriteQuote(quoteToSave)
+                                                    pendingFavoriteQuote = null
+                                                    Toast.makeText(
+                                                        context,
+                                                        context.getString(R.string.rewarded_favorite_saved),
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            },
+                                            onFailed = {
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.rewarded_ad_not_available),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        )
+                                    }
+                                }
+                            ) {
+                                Text("🎬 " + stringResource(R.string.rewarded_watch_ad))
+                            }
+                        }
+                    }
+                }
+            )
         }
     }
 }
