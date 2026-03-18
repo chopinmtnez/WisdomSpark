@@ -49,9 +49,16 @@ data class SubscriptionStatus(
  * Estado de una compra
  */
 sealed class PurchaseState {
+    /** Estado inicial: esperando conexión con Google Play Billing */
     object Loading : PurchaseState()
+    /** Conectado y listo para compras, sin operación en curso */
+    object Idle : PurchaseState()
+    /** Compra completada con éxito */
     object Success : PurchaseState()
+    /** Error en la conexión o la compra */
     data class Error(val message: String) : PurchaseState()
+    /** Compra cancelada por el usuario */
     object Cancelled : PurchaseState()
+    /** Compra pendiente de confirmación (ej: pago lento) */
     object Pending : PurchaseState()
 }

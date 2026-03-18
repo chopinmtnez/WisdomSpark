@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -35,6 +36,7 @@ class BillingManager @Inject constructor(
     private val scope = CoroutineScope(Dispatchers.IO + supervisorJob)
     private var retryCount = 0
     private val maxRetries = 5
+    private val connectionTimeoutMs = 15_000L // Timeout para conexión inicial
 
     // BillingClient
     private val billingClient = BillingClient.newBuilder(context)
@@ -60,12 +62,22 @@ class BillingManager @Inject constructor(
     }
 
     /**
-     * Conectar al Google Play Billing
+     * Conectar al Google Play Billing con timeout de seguridad
      */
     private fun startConnection() {
         if (!billingClient.isReady) {
             Log.d(tag, "Iniciando conexión con Google Play Billing...")
             billingClient.startConnection(this)
+
+            // Timeout: si tras connectionTimeoutMs el estado sigue en Loading, pasar a Idle
+            // para que la UI no quede bloqueada indefinidamente
+            scope.launch {
+                delay(connectionTimeoutMs)
+                if (_purchaseState.value is PurchaseState.Loading) {
+                    Log.w(tag, "⏰ Timeout de conexión ($connectionTimeoutMs ms). Desbloqueando UI.")
+                    _purchaseState.value = PurchaseState.Idle
+                }
+            }
         }
     }
 
@@ -173,11 +185,27 @@ class BillingManager @Inject constructor(
                 if (billingResult.responseCode == BillingResponseCode.OK) {
                     existingProducts.addAll(productDetailsResult.productDetailsList)
                     Log.d(tag, "Productos INAPP cargados: ${productDetailsResult.productDetailsList.size}")
+                } else {
+                    Log.w(tag, "⚠️ Error cargando productos INAPP: ${billingResult.debugMessage}")
                 }
                 _availableProducts.value = existingProducts.toList()
+                // Todos los productos consultados → desbloquear UI
+                markProductsReady()
             }
         } else {
             _availableProducts.value = existingProducts.toList()
+            markProductsReady()
+        }
+    }
+
+    /**
+     * Marcar que la consulta de productos ha terminado.
+     * Transita de Loading a Idle para desbloquear los botones de compra.
+     */
+    private fun markProductsReady() {
+        if (_purchaseState.value is PurchaseState.Loading) {
+            _purchaseState.value = PurchaseState.Idle
+            Log.d(tag, "✅ Productos cargados. Estado → Idle (UI desbloqueada)")
         }
     }
 
@@ -382,6 +410,13 @@ class BillingManager @Inject constructor(
         val hasPremium = isPremium()
         Log.d(tag, "🔍 Verificando característica ${feature.name}: $hasPremium")
         return hasPremium
+    }
+
+    /**
+     * Restablecer el estado de compra a Idle (listo para nueva operación)
+     */
+    fun resetToIdle() {
+        _purchaseState.value = PurchaseState.Idle
     }
 
     /**

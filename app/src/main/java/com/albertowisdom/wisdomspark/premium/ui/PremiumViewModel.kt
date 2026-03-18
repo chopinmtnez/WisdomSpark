@@ -50,7 +50,8 @@ class PremiumViewModel @Inject constructor(
                     purchaseState = purchaseState,
                     availableProducts = products,
                     isConnected = isConnected,
-                    isLoading = purchaseState is PurchaseState.Loading
+                    isLoading = purchaseState is PurchaseState.Loading,
+                    isReady = purchaseState is PurchaseState.Idle || purchaseState is PurchaseState.Error
                 )
             }.collect { newState ->
                 _uiState.value = newState
@@ -101,11 +102,10 @@ class PremiumViewModel @Inject constructor(
     }
 
     /**
-     * Restablecer estado de compra
+     * Restablecer estado de compra a Idle (listo para nueva operación)
      */
     fun resetPurchaseState() {
-        // Note: BillingManager no expone un método para esto directamente
-        // El estado se resetea automáticamente en transacciones futuras
+        billingManager.resetToIdle()
     }
 
     /**
@@ -151,7 +151,8 @@ class PremiumViewModel @Inject constructor(
         val purchaseState: PurchaseState = PurchaseState.Loading,
         val availableProducts: List<ProductDetails> = emptyList(),
         val isConnected: Boolean = false,
-        val isLoading: Boolean = true
+        val isLoading: Boolean = true,
+        val isReady: Boolean = false
     ) {
         val isPremium: Boolean get() = subscriptionStatus.isPremium
         val hasActiveSubscription: Boolean get() = subscriptionStatus.activePlan != null

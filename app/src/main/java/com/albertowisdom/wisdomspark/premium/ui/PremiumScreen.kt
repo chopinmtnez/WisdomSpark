@@ -43,13 +43,19 @@ fun PremiumScreen(
     var showPurchaseDialog by remember { mutableStateOf(false) }
     var selectedPlan by remember { mutableStateOf<SubscriptionPlan?>(null) }
 
-    // Manejar estado de compra de forma más eficiente
+    // Manejar estado de compra
     when (uiState.purchaseState) {
         is PurchaseState.Success -> {
-            LaunchedEffect(Unit) { showPurchaseDialog = false }
+            LaunchedEffect(Unit) {
+                showPurchaseDialog = false
+                viewModel.resetPurchaseState()
+            }
         }
         is PurchaseState.Cancelled -> {
-            LaunchedEffect(Unit) { showPurchaseDialog = false }
+            LaunchedEffect(Unit) {
+                showPurchaseDialog = false
+                viewModel.resetPurchaseState()
+            }
         }
         else -> { /* No action needed */ }
     }
@@ -485,6 +491,7 @@ private fun SubscriptionPlansGrid(
             plan = plan,
             formattedPrice = viewModel.getFormattedPrice(plan),
             isLoading = uiState.isLoading,
+            isReady = uiState.isReady,
             canPurchase = uiState.canMakePurchases,
             onPlanSelected = onPlanSelected
         )
@@ -496,6 +503,7 @@ private fun SubscriptionPlanCard(
     plan: SubscriptionPlan,
     formattedPrice: String,
     isLoading: Boolean,
+    isReady: Boolean,
     canPurchase: Boolean,
     onPlanSelected: (SubscriptionPlan) -> Unit
 ) {
@@ -577,7 +585,7 @@ private fun SubscriptionPlanCard(
             Button(
                 onClick = { onPlanSelected(plan) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = canPurchase && !isLoading,
+                enabled = isReady && canPurchase && formattedPrice != "---",
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (plan.isPopular)
                         MaterialTheme.colorScheme.primary
